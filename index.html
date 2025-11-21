@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker - ACC PRO Style</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-red: #D32F2F;
+            --primary-light: #FFEBEE;
+            --text-dark: #333;
+            --text-gray: #757575;
+            --bg-color: #F8F9FA;
+            --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            --success: #2E7D32;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Kanit', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            padding-bottom: 80px; /* พื้นที่สำหรับ Bottom Nav */
+        }
+
+        /* --- Header & Balance --- */
+        header {
+            background: white;
+            padding: 20px 20px 10px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .app-logo {
+            color: var(--text-dark);
+            font-weight: 900;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .app-logo span { color: var(--primary-red); }
+
+        .balance-container {
+            background: linear-gradient(135deg, var(--primary-red), #b71c1c);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 15px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+        }
+
+        .balance-title { font-size: 0.9rem; opacity: 0.9; }
+        .balance-amount { font-size: 2rem; font-weight: 600; margin: 5px 0; }
+        
+        .inc-exp-container {
+            display: flex;
+            justify-content: space-between;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: -30px; /* ดึงขึ้นไปซ้อน */
+            box-shadow: var(--card-shadow);
+            position: relative;
+            margin-bottom: 20px;
+            border: 1px solid #eee;
+        }
+
+        .money-box { text-align: center; flex: 1; }
+        .money-box:first-child { border-right: 1px solid #eee; }
+        .money-box h4 { font-size: 0.8rem; color: var(--text-gray); }
+        .money.plus { color: var(--success); font-weight: 600; }
+        .money.minus { color: var(--primary-red); font-weight: 600; }
+
+        /* --- Search & Filter --- */
+        .controls {
+            padding: 0 20px;
+            margin-bottom: 15px;
+        }
+
+        .search-box {
+            background: white;
+            border-radius: 12px;
+            padding: 5px 15px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            border: 1px solid #eee;
+            margin-bottom: 10px;
+        }
+
+        .search-box input {
+            border: none;
+            outline: none;
+            padding: 10px;
+            width: 100%;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+        }
+
+        .search-btn {
+            background: var(--primary-red);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .filter-dropdown {
+            width: 100%;
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+            background: white;
+            color: var(--text-gray);
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        /* --- List / Cards --- */
+        .transaction-list {
+            list-style: none;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: var(--card-shadow);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: transform 0.2s;
+            border: 1px solid #f0f0f0;
+        }
+
+        .card:active { transform: scale(0.98); }
+
+        .card-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .card-img {
+            width: 60px;
+            height: 60px;
+            background: var(--text-dark);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+        
+        /* สีไอคอนตามประเภท */
+        .card-img.income { background: linear-gradient(135deg, #43A047, #2E7D32); }
+        .card-img.expense { background: linear-gradient(135deg, #E53935, #C62828); }
+
+        .card-info { flex: 1; }
+        .card-title { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
+        .card-badge {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary-red);
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .card-date { font-size: 0.8rem; color: var(--text-gray); margin-top: 4px; display: block;}
+
+        .card-price-section {
+            background: #fafafa;
+            border-radius: 12px;
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 5px;
+        }
+
+        .price-label { font-size: 0.8rem; color: var(--text-gray); text-decoration: line-through; margin-right: 5px;}
+        .price-final { font-size: 1.2rem; font-weight: 600; color: var(--primary-red); }
+        .price-final.income { color: var(--success); }
+
+        .btn-delete {
+            width: 100%;
+            background: var(--primary-red);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        /* --- Bottom Nav --- */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+            z-index: 200;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-gray);
+            text-decoration: none;
+            font-size: 0.7rem;
+            gap: 5px;
+        }
+
+        .nav-item i { font-size: 1.2rem; }
+        .nav-item.active { color: var(--primary-red); font-weight: 600; }
+
+        /* --- Modal for Add --- */
+        .fab-add {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 55px;
+            height: 55px;
+            background: var(--primary-red);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 10px rgba(211, 47, 47, 0.4);
+            cursor: pointer;
+            z-index: 190;
+            transition: transform 0.2s;
+        }
+        .fab-add:active { transform: scale(0.9); }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 300;
+            align-items: flex-end;
+        }
+        .modal.show { display: flex; }
+        
+        .modal-content {
+            background: white;
+            width: 100%;
+            padding: 20px 20px 40px 20px;
+            border-radius: 20px 20px 0 0;
+            animation: slideUp 0.3s ease;
+        }
+        
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        .form-control {
+            margin-bottom: 15px;
+        }
+        .form-control label { display: block; margin-bottom: 5px; color: var(--text-dark); }
+        .form-control input, .form-control select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: 'Kanit', sans-serif;
+        }
+        
+        .btn-submit {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary-red);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .close-modal {
+            float: right;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-gray);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-gray);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="app-logo">ACC<span>PRO</span> TRACKER</div>
+        <div class="balance-container">
+            <div class="balance-title">ยอดเงินคงเหลือ (บาท)</div>
+            <h1 id="balance" class="balance-amount">฿0.00</h1>
+        </div>
+    </header>
+
+    <div style="padding: 0 20px;">
+        <div class="inc-exp-container">
+            <div class="money-box">
+                <h4>รายรับทั้งหมด</h4>
+                <p id="money-plus" class="money plus">+฿0.00</p>
+            </div>
+            <div class="money-box">
+                <h4>รายจ่ายทั้งหมด</h4>
+                <p id="money-minus" class="money minus">-฿0.00</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="search-box">
+            <i class="fas fa-search" style="color: #999;"></i>
+            <input type="text" id="search" placeholder="พิมพ์ชื่อรายการ เช่น Netflix" onkeyup="filterTransactions()">
+            <button class="search-btn" onclick="clearSearch()">ล้าง</button>
+        </div>
+        <select id="filter-type" class="filter-dropdown" onchange="filterTransactions()">
+            <option value="all">ทั้งหมด รายการ</option>
+            <option value="income">เฉพาะรายรับ</option>
+            <option value="expense">เฉพาะรายจ่าย</option>
+        </select>
+    </div>
+
+    <ul id="list" class="transaction-list">
+        </ul>
+
+    <div class="fab-add" onclick="openModal()">
+        <i class="fas fa-plus"></i>
+    </div>
+
+    <div class="modal" id="addModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h2 style="margin-bottom: 20px;">เพิ่มรายการใหม่</h2>
+            <form id="form">
+                <div class="form-control">
+                    <label for="text">ชื่อรายการ</label>
+                    <input type="text" id="text" placeholder="เช่น ค่าอาหาร, เงินเดือน" required>
+                </div>
+                <div class="form-control">
+                    <label for="amount">จำนวนเงิน (บาท)</label>
+                    <input type="number" id="amount" placeholder="ระบุจำนวนเงิน" required>
+                </div>
+                <div class="form-control">
+                    <label for="type">ประเภท</label>
+                    <select id="type">
+                        <option value="expense">รายจ่าย (-)</option>
+                        <option value="income">รายรับ (+)</option>
+                    </select>
+                </div>
+                <button class="btn-submit">บันทึกรายการ</button>
+            </form>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active">
+            <i class="fas fa-home"></i>
+            <span>หน้าหลัก</span>
+        </a>
+        <a href="#" class="nav-item">
+            <i class="fas fa-wallet"></i>
+            <span>เติมเงิน</span>
+        </a>
+        <a href="#" class="nav-item">
+            <i class="fas fa-shopping-bag"></i>
+            <span>ซื้อแอพ</span>
+        </a>
+        <a href="#" class="nav-item">
+            <i class="fas fa-history"></i>
+            <span>ประวัติ</span>
+        </a>
+        <a href="#" class="nav-item">
+            <i class="fas fa-user"></i>
+            <span>บัญชี</span>
+        </a>
+    </nav>
+
+    <script>
+        // DOM Elements
+        const balance = document.getElementById('balance');
+        const money_plus = document.getElementById('money-plus');
+        const money_minus = document.getElementById('money-minus');
+        const list = document.getElementById('list');
+        const form = document.getElementById('form');
+        const text = document.getElementById('text');
+        const amount = document.getElementById('amount');
+        const type = document.getElementById('type');
+        const searchInput = document.getElementById('search');
+        const filterSelect = document.getElementById('filter-type');
+
+        // Load transactions from local storage
+        const localStorageTransactions = JSON.parse(localStorage.getItem('transactions'));
+        let transactions = localStorageTransactions !== null ? localStorageTransactions : [];
+
+        // Add transaction
+        function addTransaction(e) {
+            e.preventDefault();
+
+            if (text.value.trim() === '' || amount.value.trim() === '') {
+                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return;
+            }
+
+            const isExpense = type.value === 'expense';
+            const transactionAmount = isExpense ? -Math.abs(amount.value) : Math.abs(amount.value);
+
+            const transaction = {
+                id: generateID(),
+                text: text.value,
+                amount: +transactionAmount,
+                date: new Date().toLocaleDateString('th-TH', {
+                    year: 'numeric', month: 'long', day: 'numeric'
+                })
+            };
+
+            transactions.push(transaction);
+            addTransactionDOM(transaction);
+            updateValues();
+            updateLocalStorage();
+
+            text.value = '';
+            amount.value = '';
+            closeModal();
+        }
+
+        // Generate random ID
+        function generateID() {
+            return Math.floor(Math.random() * 100000000);
+        }
+
+        // Add transactions to DOM (Card Style)
+        function addTransactionDOM(transaction) {
+            const sign = transaction.amount < 0 ? '-' : '+';
+            const itemType = transaction.amount < 0 ? 'expense' : 'income';
+            const badgeText = transaction.amount < 0 ? 'EXPENSE' : 'INCOME';
+            const iconClass = transaction.amount < 0 ? 'fa-shopping-cart' : 'fa-money-bill-wave';
+            
+            // แปลงตัวเลขเป็น format มีลูกน้ำ
+            const formattedAmount = Math.abs(transaction.amount).toLocaleString('en-US');
+
+            const item = document.createElement('li');
+
+            item.innerHTML = `
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-img ${itemType}">
+                            <i class="fas ${iconClass}"></i>
+                        </div>
+                        <div class="card-info">
+                            <div class="card-title">${transaction.text}</div>
+                            <span class="card-badge" style="background: ${itemType === 'income' ? '#E8F5E9' : '#FFEBEE'}; color: ${itemType === 'income' ? '#2E7D32' : '#D32F2F'};">${badgeText}</span>
+                            <span class="card-date"><i class="far fa-clock"></i> ${transaction.date}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="card-price-section">
+                        <span class="price-label">ยอดสุทธิ</span>
+                        <div class="price-final ${itemType}">
+                            ${sign}${formattedAmount} พ้อยท์
+                        </div>
+                    </div>
+
+                    <button class="btn-delete" onclick="removeTransaction(${transaction.id})">
+                        ลบรายการ
+                    </button>
+                </div>
+            `;
+
+            list.appendChild(item);
+        }
+
+        // Update the balance, income and expense
+        function updateValues() {
+            const amounts = transactions.map(transaction => transaction.amount);
+            const total = amounts.reduce((acc, item) => (acc += item), 0).toFixed(2);
+            const income = amounts.filter(item => item > 0).reduce((acc, item) => (acc += item), 0).toFixed(2);
+            const expense = (amounts.filter(item => item < 0).reduce((acc, item) => (acc += item), 0) * -1).toFixed(2);
+
+            balance.innerText = `฿${Number(total).toLocaleString('en-US')}`;
+            money_plus.innerText = `+฿${Number(income).toLocaleString('en-US')}`;
+            money_minus.innerText = `-฿${Number(expense).toLocaleString('en-US')}`;
+            
+            // Update filter count text
+            const filterOption = document.querySelector('option[value="all"]');
+            if(filterOption) filterOption.innerText = `ทั้งหมด ${transactions.length} รายการ`;
+        }
+
+        // Remove transaction by ID
+        function removeTransaction(id) {
+            if(confirm('ยืนยันการลบรายการนี้?')) {
+                transactions = transactions.filter(transaction => transaction.id !== id);
+                updateLocalStorage();
+                init();
+            }
+        }
+
+        // Update local storage transactions
+        function updateLocalStorage() {
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+        }
+
+        // Filter & Search Function
+        function filterTransactions() {
+            const textValue = searchInput.value.toLowerCase();
+            const filterValue = filterSelect.value;
+            
+            list.innerHTML = '';
+            
+            const filtered = transactions.filter(transaction => {
+                const matchesSearch = transaction.text.toLowerCase().includes(textValue);
+                let matchesType = true;
+                
+                if (filterValue === 'income') matchesType = transaction.amount > 0;
+                if (filterValue === 'expense') matchesType = transaction.amount < 0;
+                
+                return matchesSearch && matchesType;
+            });
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="empty-state">ไม่พบรายการที่ค้นหา</div>';
+            } else {
+                filtered.forEach(addTransactionDOM);
+            }
+        }
+
+        function clearSearch() {
+            searchInput.value = '';
+            filterTransactions();
+        }
+
+        // Modal Logic
+        function openModal() { document.getElementById('addModal').classList.add('show'); }
+        function closeModal() { document.getElementById('addModal').classList.remove('show'); }
+
+        // Init app
+        function init() {
+            list.innerHTML = '';
+            if(transactions.length === 0) {
+                list.innerHTML = '<div class="empty-state">ยังไม่มีรายการ<br>กดปุ่ม + เพื่อเพิ่ม</div>';
+            } else {
+                transactions.forEach(addTransactionDOM);
+            }
+            updateValues();
+        }
+
+        form.addEventListener('submit', addTransaction);
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('addModal')) {
+                closeModal();
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
