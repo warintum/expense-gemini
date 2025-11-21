@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expense Tracker - Fixed & UI Update</title>
+    <title>Expense Tracker - Edit Mode</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -16,6 +16,7 @@
             --bg-color: #F8F9FA;
             --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
             --success: #2E7D32;
+            --warning: #F57C00; /* สีส้มสำหรับปุ่มแก้ไข */
         }
 
         * {
@@ -29,14 +30,13 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-dark);
-            padding-bottom: 90px; /* เพิ่มพื้นที่กันปุ่มบัง */
+            padding-bottom: 90px;
         }
 
         /* --- Header --- */
         header {
             background: white;
             padding: 10px 20px 0 20px;
-            /* เอา sticky ออก เพื่อแก้ปัญหาบังข้อความ */
             position: relative; 
             z-index: 10;
         }
@@ -51,7 +51,6 @@
         }
         .app-logo span { color: var(--primary-red); }
 
-        /* ส่วนการ์ดสีแดง */
         .balance-container {
             background: linear-gradient(135deg, var(--primary-red), #b71c1c);
             color: white;
@@ -60,17 +59,16 @@
             box-shadow: var(--card-shadow);
             text-align: center;
             position: relative;
-            z-index: 2; /* ให้ลอยเหนือกล่องสรุป */
-            margin-bottom: 0; /* ติดกับขอบล่างเพื่อรอซ้อนทับ */
+            z-index: 2;
+            margin-bottom: 0;
         }
 
         .balance-title { font-size: 0.9rem; opacity: 0.9; }
         .balance-amount { font-size: 2.2rem; font-weight: 600; margin: 5px 0; }
 
-        /* กล่องสรุป รายรับ-รายจ่าย (ซ้อนทับขึ้นไป) */
         .inc-exp-wrapper {
             padding: 0 20px;
-            margin-top: -35px; /* ดึงขึ้นไปซ้อนทับสีแดง */
+            margin-top: -35px;
             position: relative;
             z-index: 3;
             margin-bottom: 20px;
@@ -82,7 +80,7 @@
             background: white;
             padding: 15px;
             border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1); /* เพิ่มเงาให้ชัดว่าลอยอยู่ */
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
             border: 1px solid #f5f5f5;
         }
 
@@ -92,11 +90,11 @@
         .money.plus { color: var(--success); font-weight: 600; font-size: 1.1rem;}
         .money.minus { color: var(--primary-red); font-weight: 600; font-size: 1.1rem;}
 
-        /* --- Search & Controls --- */
+        /* --- Controls --- */
         .controls {
             padding: 0 20px;
             margin-bottom: 15px;
-            position: sticky; /* ให้ช่องค้นหาติดด้านบนแทน */
+            position: sticky;
             top: 0;
             background: var(--bg-color);
             z-index: 90;
@@ -130,7 +128,7 @@
             background: white; color: var(--text-gray); font-size: 0.9rem; outline: none;
         }
 
-        /* --- List --- */
+        /* --- Card --- */
         .transaction-list { list-style: none; padding: 0 20px; }
 
         .card {
@@ -152,45 +150,50 @@
 
         .card-info { flex: 1; }
         .card-title { font-size: 1rem; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 5px;}
-        
-        /* ไอคอนบอกว่าเป็นรายการวนซ้ำ */
         .recurring-icon { color: #FF9800; font-size: 0.8rem; }
-
+        
         .card-badge {
             display: inline-block; padding: 2px 8px; border-radius: 4px;
             font-size: 0.7rem; font-weight: 600;
         }
-
         .card-date { font-size: 0.8rem; color: var(--text-gray); margin-top: 4px; display: block;}
 
         .card-price-section {
             background: #fafafa; border-radius: 12px; padding: 10px 15px;
             display: flex; justify-content: space-between; align-items: center; margin-top: 5px;
         }
-
         .price-final { font-size: 1.2rem; font-weight: 600; color: var(--primary-red); }
         .price-final.income { color: var(--success); }
 
+        /* Action Buttons */
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .action-btn {
+            flex: 1;
+            padding: 8px;
+            border-radius: 8px;
+            border: none;
+            font-size: 0.9rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-weight: 500;
+        }
+        .btn-edit {
+            background-color: #FFF3E0;
+            color: var(--warning);
+        }
         .btn-delete {
-            background: none; border: none; color: #999; font-size: 0.8rem;
-            cursor: pointer; text-decoration: underline; margin-left: auto;
+            background-color: #FFEBEE;
+            color: var(--primary-red);
         }
 
-        /* --- Bottom Nav --- */
-        .bottom-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            background: white; display: flex; justify-content: space-around;
-            padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 200;
-            padding-bottom: max(10px, env(safe-area-inset-bottom));
-        }
-        .nav-item {
-            display: flex; flex-direction: column; align-items: center;
-            color: var(--text-gray); text-decoration: none; font-size: 0.7rem; gap: 5px;
-        }
-        .nav-item i { font-size: 1.2rem; }
-        .nav-item.active { color: var(--primary-red); font-weight: 600; }
-
-        /* --- Modal & FAB --- */
+        /* --- Modal --- */
         .fab-add {
             position: fixed; bottom: 80px; right: 20px;
             width: 55px; height: 55px; background: var(--primary-red);
@@ -218,7 +221,6 @@
             border-radius: 8px; font-size: 1rem;
         }
 
-        /* Switch Checkbox for Recurring */
         .recurring-option {
             display: flex; align-items: center; justify-content: space-between;
             background: #f0f0f0; padding: 12px; border-radius: 8px; margin-bottom: 20px;
@@ -241,7 +243,7 @@
             border: none; border-radius: 12px; font-size: 1rem; cursor: pointer; font-weight: 600;
         }
 
-        /* Notification Toast */
+        /* Toast */
         #toast {
             visibility: hidden; min-width: 250px; background-color: #333; color: #fff;
             text-align: center; border-radius: 25px; padding: 16px; position: fixed;
@@ -249,6 +251,20 @@
             font-size: 0.9rem; opacity: 0; transition: opacity 0.3s, bottom 0.3s;
         }
         #toast.show { visibility: visible; opacity: 0.9; bottom: 110px; }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: white; display: flex; justify-content: space-around;
+            padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 200;
+            padding-bottom: max(10px, env(safe-area-inset-bottom));
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            color: var(--text-gray); text-decoration: none; font-size: 0.7rem; gap: 5px;
+        }
+        .nav-item i { font-size: 1.2rem; }
+        .nav-item.active { color: var(--primary-red); font-weight: 600; }
 
     </style>
 </head>
@@ -298,7 +314,7 @@
     <div class="modal" id="addModal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2>เพิ่มรายการใหม่</h2>
+                <h2 id="modal-title">เพิ่มรายการใหม่</h2>
                 <span onclick="closeModal()" style="font-size: 1.5rem; color: #999; cursor: pointer;">&times;</span>
             </div>
             
@@ -319,7 +335,7 @@
                     </select>
                 </div>
                 
-                <div class="recurring-option">
+                <div class="recurring-option" id="recurring-wrapper">
                     <span style="font-size: 0.9rem;">ทำซ้ำทุกเดือน? (Fixed Cost)</span>
                     <label class="switch">
                         <input type="checkbox" id="is-recurring">
@@ -327,7 +343,7 @@
                     </label>
                 </div>
 
-                <button class="btn-submit">บันทึกรายการ</button>
+                <button id="btn-save" class="btn-submit">บันทึกรายการ</button>
             </form>
         </div>
     </div>
@@ -342,7 +358,6 @@
     <div id="toast">แจ้งเตือน</div>
 
     <script>
-        // Elements
         const balance = document.getElementById('balance');
         const money_plus = document.getElementById('money-plus');
         const money_minus = document.getElementById('money-minus');
@@ -355,29 +370,26 @@
         const searchInput = document.getElementById('search');
         const filterSelect = document.getElementById('filter-type');
         const toast = document.getElementById('toast');
+        const modalTitle = document.getElementById('modal-title');
+        const btnSave = document.getElementById('btn-save');
 
-        // LocalStorage Keys
         const TRANSACTION_KEY = 'transactions_v2';
         const RECURRING_KEY = 'recurring_rules';
 
-        // Data State
         let transactions = JSON.parse(localStorage.getItem(TRANSACTION_KEY)) || [];
         let recurringRules = JSON.parse(localStorage.getItem(RECURRING_KEY)) || [];
+        
+        // ตัวแปรสำหรับเก็บ ID ที่กำลังแก้ไข (ถ้าเป็น null คือเพิ่มใหม่)
+        let editingId = null;
 
-        // --- Functions ---
-
-        // 1. Check & Generate Monthly Recurring Items
         function checkRecurringItems() {
             const now = new Date();
-            const currentMonthKey = `${now.getMonth() + 1}/${now.getFullYear()}`; // e.g., "11/2024"
+            const currentMonthKey = `${now.getMonth() + 1}/${now.getFullYear()}`;
             let addedCount = 0;
 
             recurringRules.forEach(rule => {
-                // เช็คว่า rule นี้ถูกสร้างรายการในเดือนนี้หรือยัง
                 const hasAddedThisMonth = rule.history.includes(currentMonthKey);
-
                 if (!hasAddedThisMonth) {
-                    // สร้างรายการใหม่
                     const newTransaction = {
                         id: generateID(),
                         text: rule.text,
@@ -386,9 +398,8 @@
                         type: rule.amount < 0 ? 'expense' : 'income',
                         fromRecurring: true
                     };
-
                     transactions.push(newTransaction);
-                    rule.history.push(currentMonthKey); // บันทึกว่าเดือนนี้สร้างแล้ว
+                    rule.history.push(currentMonthKey);
                     addedCount++;
                 }
             });
@@ -409,41 +420,49 @@
             const isExpense = type.value === 'expense';
             const val = +amount.value;
             const transactionAmount = isExpense ? -Math.abs(val) : Math.abs(val);
-            const isRecurring = isRecurringCheckbox.checked;
-
-            const newTx = {
-                id: generateID(),
-                text: text.value,
-                amount: transactionAmount,
-                date: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
-                fromRecurring: isRecurring
-            };
-
-            transactions.push(newTx);
-
-            // ถ้าติ๊ก "ทำซ้ำทุกเดือน" ให้บันทึกลง Recurring Rules
-            if (isRecurring) {
-                const now = new Date();
-                const currentMonthKey = `${now.getMonth() + 1}/${now.getFullYear()}`;
-                const newRule = {
+            
+            if (editingId !== null) {
+                // --- กรณีแก้ไขรายการเดิม ---
+                const index = transactions.findIndex(t => t.id === editingId);
+                if (index !== -1) {
+                    // อัปเดตเฉพาะข้อมูล ไม่เปลี่ยนวันที่ (หรือจะเปลี่ยนก็ได้แล้วแต่ต้องการ)
+                    transactions[index].text = text.value;
+                    transactions[index].amount = transactionAmount;
+                    // *หมายเหตุ: การแก้ไขรายการจะไม่ไปเปลี่ยนกฎ Recurring หลัก*
+                    showToast('แก้ไขรายการสำเร็จ');
+                }
+            } else {
+                // --- กรณีเพิ่มรายการใหม่ ---
+                const isRecurring = isRecurringCheckbox.checked;
+                const newTx = {
                     id: generateID(),
                     text: text.value,
                     amount: transactionAmount,
-                    history: [currentMonthKey] // บันทึกว่าเดือนแรกสร้างแล้ว
+                    date: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
+                    fromRecurring: isRecurring
                 };
-                recurringRules.push(newRule);
-                localStorage.setItem(RECURRING_KEY, JSON.stringify(recurringRules));
-                showToast('บันทึกเป็นรายการรายเดือนแล้ว');
+                transactions.push(newTx);
+
+                if (isRecurring) {
+                    const now = new Date();
+                    const currentMonthKey = `${now.getMonth() + 1}/${now.getFullYear()}`;
+                    const newRule = {
+                        id: generateID(),
+                        text: text.value,
+                        amount: transactionAmount,
+                        history: [currentMonthKey]
+                    };
+                    recurringRules.push(newRule);
+                    localStorage.setItem(RECURRING_KEY, JSON.stringify(recurringRules));
+                    showToast('บันทึกรายการและตั้งเป็นรายเดือนแล้ว');
+                } else {
+                    showToast('บันทึกรายการสำเร็จ');
+                }
             }
 
             updateValues();
             updateLocalStorage();
-            init(); // Refresh list
-            
-            // Reset Form
-            text.value = '';
-            amount.value = '';
-            isRecurringCheckbox.checked = false;
+            init();
             closeModal();
         }
 
@@ -454,9 +473,7 @@
             const itemType = transaction.amount < 0 ? 'expense' : 'income';
             const badgeText = transaction.amount < 0 ? 'EXPENSE' : 'INCOME';
             const iconClass = transaction.amount < 0 ? 'fa-shopping-bag' : 'fa-coins';
-            
-            // Check if recurring
-            const recurringIcon = transaction.fromRecurring ? '<i class="fas fa-sync-alt recurring-icon" title="รายการรายเดือน"></i>' : '';
+            const recurringIcon = transaction.fromRecurring ? '<i class="fas fa-sync-alt recurring-icon"></i>' : '';
 
             const item = document.createElement('li');
             item.innerHTML = `
@@ -472,7 +489,6 @@
                             <span class="card-badge" style="background: ${itemType === 'income' ? '#E8F5E9' : '#FFEBEE'}; color: ${itemType === 'income' ? '#2E7D32' : '#D32F2F'};">${badgeText}</span>
                             <span class="card-date">${transaction.date}</span>
                         </div>
-                        <button class="btn-delete" onclick="removeTransaction(${transaction.id})">ลบ</button>
                     </div>
                     
                     <div class="card-price-section">
@@ -480,6 +496,15 @@
                         <div class="price-final ${itemType}">
                             ${sign}${Math.abs(transaction.amount).toLocaleString('en-US')} พ้อยท์
                         </div>
+                    </div>
+
+                    <div class="card-actions">
+                        <button class="action-btn btn-edit" onclick="openEditModal(${transaction.id})">
+                            <i class="fas fa-edit"></i> แก้ไข
+                        </button>
+                        <button class="action-btn btn-delete" onclick="removeTransaction(${transaction.id})">
+                            <i class="fas fa-trash-alt"></i> ลบ
+                        </button>
                     </div>
                 </div>
             `;
@@ -502,6 +527,7 @@
                 transactions = transactions.filter(t => t.id !== id);
                 updateLocalStorage();
                 init();
+                showToast('ลบรายการแล้ว');
             }
         }
 
@@ -510,7 +536,6 @@
             localStorage.setItem(RECURRING_KEY, JSON.stringify(recurringRules));
         }
 
-        // Filter Logic
         function filterTransactions() {
             const textValue = searchInput.value.toLowerCase();
             const filterValue = filterSelect.value;
@@ -529,16 +554,53 @@
         }
         function clearSearch() { searchInput.value = ''; filterTransactions(); }
 
-        // Helpers
         function showToast(msg) {
             toast.innerText = msg;
             toast.className = "show";
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
         }
-        function openModal() { document.getElementById('addModal').classList.add('show'); }
-        function closeModal() { document.getElementById('addModal').classList.remove('show'); }
 
-        // Initial App
+        // --- Modal Logic Updated ---
+        
+        // เปิด Modal เพื่อเพิ่มรายการใหม่
+        function openModal() { 
+            editingId = null; // Reset ID
+            form.reset();
+            modalTitle.innerText = "เพิ่มรายการใหม่";
+            btnSave.innerText = "บันทึกรายการ";
+            document.getElementById('recurring-wrapper').style.display = 'flex'; // แสดงตัวเลือก Fixed Cost
+            document.getElementById('addModal').classList.add('show'); 
+        }
+
+        // เปิด Modal เพื่อแก้ไขรายการ
+        function openEditModal(id) {
+            const transaction = transactions.find(t => t.id === id);
+            if (!transaction) return;
+
+            editingId = id; // Set ID
+            
+            // Populate form
+            text.value = transaction.text;
+            amount.value = Math.abs(transaction.amount);
+            type.value = transaction.amount < 0 ? 'expense' : 'income';
+            
+            // ซ่อนตัวเลือก Recurring เมื่อแก้ไข (เพื่อความเรียบง่าย ไม่ให้ Logic ตีกัน)
+            document.getElementById('recurring-wrapper').style.display = 'none';
+            
+            modalTitle.innerText = "แก้ไขรายการ";
+            btnSave.innerText = "บันทึกการแก้ไข";
+            document.getElementById('addModal').classList.add('show');
+        }
+
+        function closeModal() { 
+            document.getElementById('addModal').classList.remove('show');
+            // Reset form on close
+            setTimeout(() => {
+                form.reset();
+                editingId = null;
+            }, 300);
+        }
+
         function init() {
             list.innerHTML = '';
             transactions.forEach(addTransactionDOM);
@@ -546,9 +608,7 @@
         }
 
         form.addEventListener('submit', addTransaction);
-        
-        // Run on Load
-        checkRecurringItems(); // ตรวจสอบรายการรายเดือน
+        checkRecurringItems();
         init();
 
     </script>
