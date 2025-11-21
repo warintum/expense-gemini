@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expense Tracker - Import/Export CSV</title>
+    <title>Expense Tracker - Clear Data Supported</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -96,6 +96,13 @@
         }
         .data-menu-btn i { font-size: 1.2rem; width: 30px; text-align: center; }
         .data-menu-btn:active { background-color: #f5f5f5; transform: scale(0.98); }
+        
+        /* ปุ่มลบข้อมูลให้เด่น */
+        .data-menu-btn.danger {
+            border-color: #ffebee;
+            color: var(--primary-red);
+            background: #fffafb;
+        }
 
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 25px; padding: 16px; position: fixed; z-index: 1000; left: 50%; bottom: 100px; transform: translateX(-50%); font-size: 0.9rem; opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
         #toast.show { visibility: visible; opacity: 0.9; bottom: 110px; }
@@ -197,14 +204,21 @@
             </button>
             
             <button class="data-menu-btn" onclick="document.getElementById('importFile').click()">
-                <i class="fas fa-file-import" style="color: var(--primary-red);"></i>
+                <i class="fas fa-file-import" style="color: #1976D2;"></i>
                 <span>นำเข้าไฟล์ CSV (Import)</span>
             </button>
             <input type="file" id="importFile" accept=".csv" style="display: none;" onchange="importCSV(this)">
+            
+            <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+
+            <button class="data-menu-btn danger" onclick="clearAllData()">
+                <i class="fas fa-trash-alt"></i>
+                <span>ล้างข้อมูลทั้งหมด (Clear All)</span>
+            </button>
 
             <div style="margin-top: 20px; font-size: 0.8rem; color: #999;">
                 *การนำเข้าจะเพิ่มรายการเข้าไปในฐานข้อมูลเดิม <br>
-                *รองรับคอลัมน์: RecordType, Date, Name, Category, Type, Amount
+                *ปุ่มล้างข้อมูลจะลบทั้งรายการและข้อมูลรายเดือน (Fixed Cost)
             </div>
         </div>
     </div>
@@ -241,30 +255,36 @@
         let recurringRules = JSON.parse(localStorage.getItem(RECURRING_KEY)) || [];
         let editingId = null;
 
-        // --- CSV Functionality ---
+        // --- Data Management Functions ---
+
+        function clearAllData() {
+            if(confirm('⚠️ คำเตือน: คุณแน่ใจหรือไม่ที่จะลบข้อมูลทั้งหมด? \n(การกระทำนี้ไม่สามารถกู้คืนได้)')) {
+                if(confirm('❓ ยืนยันอีกครั้ง: ลบข้อมูลทุกรายการและค่าเริ่มต้นรายเดือนทั้งหมด?')) {
+                    transactions = [];
+                    recurringRules = [];
+                    updateLocalStorage();
+                    init();
+                    showToast('ลบข้อมูลทั้งหมดเรียบร้อยแล้ว');
+                    closeDataModal();
+                }
+            }
+        }
 
         function exportCSV() {
-            // Header ตามไฟล์แนบ
             let csvContent = "\uFEFFRecordType,Date,Name,Category,Type,Amount\n";
-
-            // 1. Export รายการปกติ
             transactions.forEach(t => {
                 const amountPos = Math.abs(t.amount);
                 const typeStr = t.amount < 0 ? 'expense' : 'income';
                 const row = `Transaction,"${t.date}","${t.text}","",${typeStr},${amountPos}`;
                 csvContent += row + "\n";
             });
-
-            // 2. Export รายการ Recurring (ถ้าต้องการ Backup การตั้งค่า)
             recurringRules.forEach(r => {
                 const amountPos = Math.abs(r.amount);
                 const typeStr = r.amount < 0 ? 'expense' : 'income';
-                // วันที่ไม่มีความหมายสำหรับ rule ใช้ว่างไว้
                 const row = `Recurring,,"${r.text}","",${typeStr},${amountPos}`;
                 csvContent += row + "\n";
             });
 
-            // Create Download Link
             const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
@@ -287,16 +307,9 @@
                 const lines = text.split('\n');
                 let successCount = 0;
 
-                // เริ่มอ่านบรรทัดที่ 1 (ข้าม Header บรรทัด 0)
                 for (let i = 1; i < lines.length; i++) {
-                    // แก้ปัญหาเครื่องหมาย " และ , ใน CSV อย่างง่าย
-                    // สมมติว่าข้อมูลไม่มี , ในชื่อรายการเพื่อความง่าย หรือใช้ regex พื้นฐาน
-                    // แต่ถ้าใช้แบบง่าย split(',') อาจพังถ้าชื่อมีคอมม่า
-                    // ใช้ Regex เพื่อ split CSV อย่างถูกต้อง
                     const row = parseCSVLine(lines[i]);
-                    
-                    if (row.length >= 5) { // ต้องมีข้อมูลอย่างน้อย 5-6 ช่อง
-                        // Mapping: 0:RecordType, 1:Date, 2:Name, 3:Category, 4:Type, 5:Amount
+                    if (row.length >= 5) {
                         const recordType = row[0] ? row[0].trim() : 'Transaction';
                         const dateStr = row[1] ? row[1].trim() : new Date().toLocaleDateString('th-TH');
                         const name = row[2] ? row[2].trim() : 'No Name';
@@ -304,20 +317,17 @@
                         const amountVal = row[5] ? parseFloat(row[5]) : 0;
 
                         if (!name || isNaN(amountVal)) continue;
-
                         const finalAmount = typeStr === 'expense' ? -Math.abs(amountVal) : Math.abs(amountVal);
 
                         if (recordType === 'Recurring') {
-                            // Import as Rule
                             const newRule = {
                                 id: generateID(),
                                 text: name,
                                 amount: finalAmount,
-                                history: [] // Reset history for imported rules
+                                history: []
                             };
                             recurringRules.push(newRule);
                         } else {
-                            // Import as Transaction
                             const newTx = {
                                 id: generateID(),
                                 text: name,
@@ -335,12 +345,11 @@
                 init();
                 showToast(`นำเข้าสำเร็จ ${successCount} รายการ`);
                 closeDataModal();
-                input.value = ''; // Reset file input
+                input.value = '';
             };
             reader.readAsText(file);
         }
 
-        // Helper to parse CSV line considering quotes
         function parseCSVLine(text) {
             let re_valid = /^\s*(?:'[^']*'|"[^"]*"|[^,'"]*)*(?:,(?:\s*(?:'[^']*'|"[^"]*"|[^,'"]*)*))?$/;
             let re_value = /(?!\s*$)\s*(?:'([^']*)'|"([^"]*)"|([^,'"]*))\s*(?:,|$)/g;
