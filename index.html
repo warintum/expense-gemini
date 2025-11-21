@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expense Tracker - Edit Mode</title>
+    <title>Expense Tracker - Import/Export CSV</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -16,74 +16,24 @@
             --bg-color: #F8F9FA;
             --card-shadow: 0 4px 12px rgba(0,0,0,0.08);
             --success: #2E7D32;
-            --warning: #F57C00; /* สีส้มสำหรับปุ่มแก้ไข */
+            --warning: #F57C00;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Kanit', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-dark);
-            padding-bottom: 90px;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Kanit', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 90px; }
 
         /* --- Header --- */
-        header {
-            background: white;
-            padding: 10px 20px 0 20px;
-            position: relative; 
-            z-index: 10;
-        }
-
-        .app-logo {
-            color: var(--text-dark);
-            font-weight: 900;
-            font-size: 1.5rem;
-            margin-bottom: 15px;
-            display: flex; align-items: center; gap: 5px;
-            padding-top: 10px;
-        }
+        header { background: white; padding: 10px 20px 0 20px; position: relative; z-index: 10; }
+        .app-logo { color: var(--text-dark); font-weight: 900; font-size: 1.5rem; margin-bottom: 15px; display: flex; align-items: center; gap: 5px; padding-top: 10px; }
         .app-logo span { color: var(--primary-red); }
 
-        .balance-container {
-            background: linear-gradient(135deg, var(--primary-red), #b71c1c);
-            color: white;
-            padding: 25px 20px;
-            border-radius: 16px;
-            box-shadow: var(--card-shadow);
-            text-align: center;
-            position: relative;
-            z-index: 2;
-            margin-bottom: 0;
-        }
-
+        .balance-container { background: linear-gradient(135deg, var(--primary-red), #b71c1c); color: white; padding: 25px 20px; border-radius: 16px; box-shadow: var(--card-shadow); text-align: center; position: relative; z-index: 2; margin-bottom: 0; }
         .balance-title { font-size: 0.9rem; opacity: 0.9; }
         .balance-amount { font-size: 2.2rem; font-weight: 600; margin: 5px 0; }
 
-        .inc-exp-wrapper {
-            padding: 0 20px;
-            margin-top: -35px;
-            position: relative;
-            z-index: 3;
-            margin-bottom: 20px;
-        }
-
-        .inc-exp-container {
-            display: flex;
-            justify-content: space-between;
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-            border: 1px solid #f5f5f5;
-        }
-
+        /* --- Summary Box --- */
+        .inc-exp-wrapper { padding: 0 20px; margin-top: -35px; position: relative; z-index: 3; margin-bottom: 20px; }
+        .inc-exp-container { display: flex; justify-content: space-between; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: 1px solid #f5f5f5; }
         .money-box { text-align: center; flex: 1; }
         .money-box:first-child { border-right: 1px solid #eee; }
         .money-box h4 { font-size: 0.8rem; color: var(--text-gray); margin-bottom: 5px;}
@@ -91,178 +41,68 @@
         .money.minus { color: var(--primary-red); font-weight: 600; font-size: 1.1rem;}
 
         /* --- Controls --- */
-        .controls {
-            padding: 0 20px;
-            margin-bottom: 15px;
-            position: sticky;
-            top: 0;
-            background: var(--bg-color);
-            z-index: 90;
-            padding-top: 10px;
-            padding-bottom: 10px;
-        }
+        .controls { padding: 0 20px; margin-bottom: 15px; position: sticky; top: 0; background: var(--bg-color); z-index: 90; padding-top: 10px; padding-bottom: 10px; }
+        .search-box { background: white; border-radius: 12px; padding: 5px 15px; display: flex; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.03); border: 1px solid #eee; margin-bottom: 10px; }
+        .search-box input { border: none; outline: none; padding: 10px; width: 100%; font-size: 0.95rem; color: var(--text-dark); }
+        .search-btn { background: var(--primary-red); color: white; border: none; padding: 8px 15px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
+        .filter-dropdown { width: 100%; padding: 10px; border-radius: 12px; border: 1px solid #eee; background: white; color: var(--text-gray); font-size: 0.9rem; outline: none; }
 
-        .search-box {
-            background: white;
-            border-radius: 12px;
-            padding: 5px 15px;
-            display: flex;
-            align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-            border: 1px solid #eee;
-            margin-bottom: 10px;
-        }
-
-        .search-box input {
-            border: none; outline: none; padding: 10px; width: 100%;
-            font-size: 0.95rem; color: var(--text-dark);
-        }
-
-        .search-btn {
-            background: var(--primary-red); color: white; border: none;
-            padding: 8px 15px; border-radius: 8px; font-size: 0.8rem; cursor: pointer;
-        }
-
-        .filter-dropdown {
-            width: 100%; padding: 10px; border-radius: 12px; border: 1px solid #eee;
-            background: white; color: var(--text-gray); font-size: 0.9rem; outline: none;
-        }
-
-        /* --- Card --- */
+        /* --- List --- */
         .transaction-list { list-style: none; padding: 0 20px; }
-
-        .card {
-            background: white; border-radius: 16px; padding: 15px;
-            margin-bottom: 15px; box-shadow: var(--card-shadow);
-            display: flex; flex-direction: column; position: relative;
-            border: 1px solid #f0f0f0;
-        }
-
+        .card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; position: relative; border: 1px solid #f0f0f0; }
         .card-header { display: flex; align-items: flex-start; gap: 15px; margin-bottom: 10px; }
-        
-        .card-img {
-            width: 50px; height: 50px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 1.3rem; flex-shrink: 0;
-        }
+        .card-img { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.3rem; flex-shrink: 0; }
         .card-img.income { background: linear-gradient(135deg, #43A047, #2E7D32); }
         .card-img.expense { background: linear-gradient(135deg, #E53935, #C62828); }
-
         .card-info { flex: 1; }
         .card-title { font-size: 1rem; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 5px;}
         .recurring-icon { color: #FF9800; font-size: 0.8rem; }
-        
-        .card-badge {
-            display: inline-block; padding: 2px 8px; border-radius: 4px;
-            font-size: 0.7rem; font-weight: 600;
-        }
+        .card-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; }
         .card-date { font-size: 0.8rem; color: var(--text-gray); margin-top: 4px; display: block;}
-
-        .card-price-section {
-            background: #fafafa; border-radius: 12px; padding: 10px 15px;
-            display: flex; justify-content: space-between; align-items: center; margin-top: 5px;
-        }
+        .card-price-section { background: #fafafa; border-radius: 12px; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
         .price-final { font-size: 1.2rem; font-weight: 600; color: var(--primary-red); }
         .price-final.income { color: var(--success); }
-
-        /* Action Buttons */
-        .card-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .action-btn {
-            flex: 1;
-            padding: 8px;
-            border-radius: 8px;
-            border: none;
-            font-size: 0.9rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-            font-weight: 500;
-        }
-        .btn-edit {
-            background-color: #FFF3E0;
-            color: var(--warning);
-        }
-        .btn-delete {
-            background-color: #FFEBEE;
-            color: var(--primary-red);
-        }
-
-        /* --- Modal --- */
-        .fab-add {
-            position: fixed; bottom: 80px; right: 20px;
-            width: 55px; height: 55px; background: var(--primary-red);
-            color: white; border-radius: 50%; display: flex;
-            align-items: center; justify-content: center; font-size: 1.5rem;
-            box-shadow: 0 4px 10px rgba(211, 47, 47, 0.4); cursor: pointer; z-index: 190;
-        }
-
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5); z-index: 300; align-items: flex-end;
-        }
-        .modal.show { display: flex; }
         
-        .modal-content {
-            background: white; width: 100%; padding: 25px 20px 40px 20px;
-            border-radius: 20px 20px 0 0; animation: slideUp 0.3s ease;
-        }
+        .card-actions { display: flex; gap: 10px; margin-top: 10px; }
+        .action-btn { flex: 1; padding: 8px; border-radius: 8px; border: none; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; font-weight: 500; }
+        .btn-edit { background-color: #FFF3E0; color: var(--warning); }
+        .btn-delete { background-color: #FFEBEE; color: var(--primary-red); }
+
+        /* --- FAB & Modals --- */
+        .fab-add { position: fixed; bottom: 80px; right: 20px; width: 55px; height: 55px; background: var(--primary-red); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 10px rgba(211, 47, 47, 0.4); cursor: pointer; z-index: 190; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 300; align-items: flex-end; }
+        .modal.show { display: flex; }
+        .modal-content { background: white; width: 100%; padding: 25px 20px 40px 20px; border-radius: 20px 20px 0 0; animation: slideUp 0.3s ease; }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
         .form-control { margin-bottom: 15px; }
         .form-control label { display: block; margin-bottom: 8px; color: var(--text-dark); font-weight: 500;}
-        .form-control input, .form-control select {
-            width: 100%; padding: 12px; border: 1px solid #ddd;
-            border-radius: 8px; font-size: 1rem;
-        }
-
-        .recurring-option {
-            display: flex; align-items: center; justify-content: space-between;
-            background: #f0f0f0; padding: 12px; border-radius: 8px; margin-bottom: 20px;
-        }
+        .form-control input, .form-control select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; }
+        .recurring-option { display: flex; align-items: center; justify-content: space-between; background: #f0f0f0; padding: 12px; border-radius: 8px; margin-bottom: 20px; }
         .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #ccc; transition: .4s; border-radius: 34px;
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px;
-            background-color: white; transition: .4s; border-radius: 50%;
-        }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--primary-red); }
         input:checked + .slider:before { transform: translateX(26px); }
-        
-        .btn-submit {
-            width: 100%; padding: 14px; background: var(--primary-red); color: white;
-            border: none; border-radius: 12px; font-size: 1rem; cursor: pointer; font-weight: 600;
-        }
+        .btn-submit { width: 100%; padding: 14px; background: var(--primary-red); color: white; border: none; border-radius: 12px; font-size: 1rem; cursor: pointer; font-weight: 600; }
 
-        /* Toast */
-        #toast {
-            visibility: hidden; min-width: 250px; background-color: #333; color: #fff;
-            text-align: center; border-radius: 25px; padding: 16px; position: fixed;
-            z-index: 1000; left: 50%; bottom: 100px; transform: translateX(-50%);
-            font-size: 0.9rem; opacity: 0; transition: opacity 0.3s, bottom 0.3s;
+        /* Data Menu Buttons */
+        .data-menu-btn {
+            width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 12px;
+            border: 1px solid #eee; background: white; display: flex; align-items: center; gap: 15px;
+            font-size: 1rem; cursor: pointer; color: var(--text-dark); box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
+        .data-menu-btn i { font-size: 1.2rem; width: 30px; text-align: center; }
+        .data-menu-btn:active { background-color: #f5f5f5; transform: scale(0.98); }
+
+        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 25px; padding: 16px; position: fixed; z-index: 1000; left: 50%; bottom: 100px; transform: translateX(-50%); font-size: 0.9rem; opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
         #toast.show { visibility: visible; opacity: 0.9; bottom: 110px; }
 
         /* Bottom Nav */
-        .bottom-nav {
-            position: fixed; bottom: 0; left: 0; width: 100%;
-            background: white; display: flex; justify-content: space-around;
-            padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 200;
-            padding-bottom: max(10px, env(safe-area-inset-bottom));
-        }
-        .nav-item {
-            display: flex; flex-direction: column; align-items: center;
-            color: var(--text-gray); text-decoration: none; font-size: 0.7rem; gap: 5px;
-        }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 200; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+        .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-gray); text-decoration: none; font-size: 0.7rem; gap: 5px; cursor: pointer;}
         .nav-item i { font-size: 1.2rem; }
         .nav-item.active { color: var(--primary-red); font-weight: 600; }
 
@@ -304,10 +144,9 @@
         </select>
     </div>
 
-    <ul id="list" class="transaction-list">
-        </ul>
+    <ul id="list" class="transaction-list"></ul>
 
-    <div class="fab-add" onclick="openModal()">
+    <div class="fab-add" onclick="openAddModal()">
         <i class="fas fa-plus"></i>
     </div>
 
@@ -315,9 +154,8 @@
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h2 id="modal-title">เพิ่มรายการใหม่</h2>
-                <span onclick="closeModal()" style="font-size: 1.5rem; color: #999; cursor: pointer;">&times;</span>
+                <span onclick="closeAddModal()" style="font-size: 1.5rem; color: #999; cursor: pointer;">&times;</span>
             </div>
-            
             <form id="form">
                 <div class="form-control">
                     <label for="text">ชื่อรายการ</label>
@@ -334,7 +172,6 @@
                         <option value="income">รายรับ (+)</option>
                     </select>
                 </div>
-                
                 <div class="recurring-option" id="recurring-wrapper">
                     <span style="font-size: 0.9rem;">ทำซ้ำทุกเดือน? (Fixed Cost)</span>
                     <label class="switch">
@@ -342,17 +179,41 @@
                         <span class="slider"></span>
                     </label>
                 </div>
-
                 <button id="btn-save" class="btn-submit">บันทึกรายการ</button>
             </form>
         </div>
     </div>
 
+    <div class="modal" id="dataModal">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>จัดการข้อมูล (CSV)</h2>
+                <span onclick="closeDataModal()" style="font-size: 1.5rem; color: #999; cursor: pointer;">&times;</span>
+            </div>
+            
+            <button class="data-menu-btn" onclick="exportCSV()">
+                <i class="fas fa-file-export" style="color: var(--success);"></i>
+                <span>ส่งออกไฟล์ CSV (Export)</span>
+            </button>
+            
+            <button class="data-menu-btn" onclick="document.getElementById('importFile').click()">
+                <i class="fas fa-file-import" style="color: var(--primary-red);"></i>
+                <span>นำเข้าไฟล์ CSV (Import)</span>
+            </button>
+            <input type="file" id="importFile" accept=".csv" style="display: none;" onchange="importCSV(this)">
+
+            <div style="margin-top: 20px; font-size: 0.8rem; color: #999;">
+                *การนำเข้าจะเพิ่มรายการเข้าไปในฐานข้อมูลเดิม <br>
+                *รองรับคอลัมน์: RecordType, Date, Name, Category, Type, Amount
+            </div>
+        </div>
+    </div>
+
     <nav class="bottom-nav">
-        <a href="#" class="nav-item active"><i class="fas fa-home"></i><span>หน้าหลัก</span></a>
-        <a href="#" class="nav-item"><i class="fas fa-wallet"></i><span>เติมเงิน</span></a>
-        <a href="#" class="nav-item"><i class="fas fa-chart-pie"></i><span>สรุปผล</span></a>
-        <a href="#" class="nav-item"><i class="fas fa-cog"></i><span>ตั้งค่า</span></a>
+        <a onclick="window.scrollTo(0,0)" class="nav-item active"><i class="fas fa-home"></i><span>หน้าหลัก</span></a>
+        <a class="nav-item"><i class="fas fa-wallet"></i><span>เติมเงิน</span></a>
+        <a class="nav-item"><i class="fas fa-chart-pie"></i><span>สรุปผล</span></a>
+        <a onclick="openDataModal()" class="nav-item"><i class="fas fa-database"></i><span>ข้อมูล</span></a>
     </nav>
 
     <div id="toast">แจ้งเตือน</div>
@@ -378,92 +239,189 @@
 
         let transactions = JSON.parse(localStorage.getItem(TRANSACTION_KEY)) || [];
         let recurringRules = JSON.parse(localStorage.getItem(RECURRING_KEY)) || [];
-        
-        // ตัวแปรสำหรับเก็บ ID ที่กำลังแก้ไข (ถ้าเป็น null คือเพิ่มใหม่)
         let editingId = null;
+
+        // --- CSV Functionality ---
+
+        function exportCSV() {
+            // Header ตามไฟล์แนบ
+            let csvContent = "\uFEFFRecordType,Date,Name,Category,Type,Amount\n";
+
+            // 1. Export รายการปกติ
+            transactions.forEach(t => {
+                const amountPos = Math.abs(t.amount);
+                const typeStr = t.amount < 0 ? 'expense' : 'income';
+                const row = `Transaction,"${t.date}","${t.text}","",${typeStr},${amountPos}`;
+                csvContent += row + "\n";
+            });
+
+            // 2. Export รายการ Recurring (ถ้าต้องการ Backup การตั้งค่า)
+            recurringRules.forEach(r => {
+                const amountPos = Math.abs(r.amount);
+                const typeStr = r.amount < 0 ? 'expense' : 'income';
+                // วันที่ไม่มีความหมายสำหรับ rule ใช้ว่างไว้
+                const row = `Recurring,,"${r.text}","",${typeStr},${amountPos}`;
+                csvContent += row + "\n";
+            });
+
+            // Create Download Link
+            const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            const dateStr = new Date().toISOString().slice(0,10);
+            link.setAttribute("download", `expense_data_${dateStr}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("ส่งออกไฟล์ CSV สำเร็จ");
+            closeDataModal();
+        }
+
+        function importCSV(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split('\n');
+                let successCount = 0;
+
+                // เริ่มอ่านบรรทัดที่ 1 (ข้าม Header บรรทัด 0)
+                for (let i = 1; i < lines.length; i++) {
+                    // แก้ปัญหาเครื่องหมาย " และ , ใน CSV อย่างง่าย
+                    // สมมติว่าข้อมูลไม่มี , ในชื่อรายการเพื่อความง่าย หรือใช้ regex พื้นฐาน
+                    // แต่ถ้าใช้แบบง่าย split(',') อาจพังถ้าชื่อมีคอมม่า
+                    // ใช้ Regex เพื่อ split CSV อย่างถูกต้อง
+                    const row = parseCSVLine(lines[i]);
+                    
+                    if (row.length >= 5) { // ต้องมีข้อมูลอย่างน้อย 5-6 ช่อง
+                        // Mapping: 0:RecordType, 1:Date, 2:Name, 3:Category, 4:Type, 5:Amount
+                        const recordType = row[0] ? row[0].trim() : 'Transaction';
+                        const dateStr = row[1] ? row[1].trim() : new Date().toLocaleDateString('th-TH');
+                        const name = row[2] ? row[2].trim() : 'No Name';
+                        const typeStr = row[4] ? row[4].trim().toLowerCase() : 'expense';
+                        const amountVal = row[5] ? parseFloat(row[5]) : 0;
+
+                        if (!name || isNaN(amountVal)) continue;
+
+                        const finalAmount = typeStr === 'expense' ? -Math.abs(amountVal) : Math.abs(amountVal);
+
+                        if (recordType === 'Recurring') {
+                            // Import as Rule
+                            const newRule = {
+                                id: generateID(),
+                                text: name,
+                                amount: finalAmount,
+                                history: [] // Reset history for imported rules
+                            };
+                            recurringRules.push(newRule);
+                        } else {
+                            // Import as Transaction
+                            const newTx = {
+                                id: generateID(),
+                                text: name,
+                                amount: finalAmount,
+                                date: dateStr,
+                                fromRecurring: false
+                            };
+                            transactions.push(newTx);
+                        }
+                        successCount++;
+                    }
+                }
+
+                updateLocalStorage();
+                init();
+                showToast(`นำเข้าสำเร็จ ${successCount} รายการ`);
+                closeDataModal();
+                input.value = ''; // Reset file input
+            };
+            reader.readAsText(file);
+        }
+
+        // Helper to parse CSV line considering quotes
+        function parseCSVLine(text) {
+            let re_valid = /^\s*(?:'[^']*'|"[^"]*"|[^,'"]*)*(?:,(?:\s*(?:'[^']*'|"[^"]*"|[^,'"]*)*))?$/;
+            let re_value = /(?!\s*$)\s*(?:'([^']*)'|"([^"]*)"|([^,'"]*))\s*(?:,|$)/g;
+            let a = [];
+            text.replace(re_value, function(m0, m1, m2, m3) {
+                if (m1 !== undefined) a.push(m1.replace(/\\'/g, "'"));
+                else if (m2 !== undefined) a.push(m2.replace(/\\"/g, '"'));
+                else if (m3 !== undefined) a.push(m3);
+                return '';
+            });
+            if (/,\s*$/.test(text)) a.push('');
+            return a;
+        }
+
+        // --- Core Functions ---
 
         function checkRecurringItems() {
             const now = new Date();
             const currentMonthKey = `${now.getMonth() + 1}/${now.getFullYear()}`;
             let addedCount = 0;
-
             recurringRules.forEach(rule => {
-                const hasAddedThisMonth = rule.history.includes(currentMonthKey);
-                if (!hasAddedThisMonth) {
-                    const newTransaction = {
+                if (!rule.history.includes(currentMonthKey)) {
+                    transactions.push({
                         id: generateID(),
                         text: rule.text,
                         amount: rule.amount,
                         date: now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
                         type: rule.amount < 0 ? 'expense' : 'income',
                         fromRecurring: true
-                    };
-                    transactions.push(newTransaction);
+                    });
                     rule.history.push(currentMonthKey);
                     addedCount++;
                 }
             });
-
             if (addedCount > 0) {
                 updateLocalStorage();
-                showToast(`ระบบเพิ่มรายการคงที่ให้ ${addedCount} รายการ`);
+                showToast(`เพิ่มรายการคงที่ ${addedCount} รายการ`);
             }
         }
 
         function addTransaction(e) {
             e.preventDefault();
-            if (text.value.trim() === '' || amount.value.trim() === '') {
-                alert('กรุณากรอกข้อมูลให้ครบถ้วน');
-                return;
-            }
+            if (text.value.trim() === '' || amount.value.trim() === '') return;
 
             const isExpense = type.value === 'expense';
-            const val = +amount.value;
-            const transactionAmount = isExpense ? -Math.abs(val) : Math.abs(val);
+            const transactionAmount = isExpense ? -Math.abs(+amount.value) : Math.abs(+amount.value);
             
             if (editingId !== null) {
-                // --- กรณีแก้ไขรายการเดิม ---
                 const index = transactions.findIndex(t => t.id === editingId);
                 if (index !== -1) {
-                    // อัปเดตเฉพาะข้อมูล ไม่เปลี่ยนวันที่ (หรือจะเปลี่ยนก็ได้แล้วแต่ต้องการ)
                     transactions[index].text = text.value;
                     transactions[index].amount = transactionAmount;
-                    // *หมายเหตุ: การแก้ไขรายการจะไม่ไปเปลี่ยนกฎ Recurring หลัก*
                     showToast('แก้ไขรายการสำเร็จ');
                 }
             } else {
-                // --- กรณีเพิ่มรายการใหม่ ---
                 const isRecurring = isRecurringCheckbox.checked;
-                const newTx = {
+                transactions.push({
                     id: generateID(),
                     text: text.value,
                     amount: transactionAmount,
                     date: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
                     fromRecurring: isRecurring
-                };
-                transactions.push(newTx);
+                });
 
                 if (isRecurring) {
                     const now = new Date();
-                    const currentMonthKey = `${now.getMonth() + 1}/${now.getFullYear()}`;
-                    const newRule = {
+                    recurringRules.push({
                         id: generateID(),
                         text: text.value,
                         amount: transactionAmount,
-                        history: [currentMonthKey]
-                    };
-                    recurringRules.push(newRule);
-                    localStorage.setItem(RECURRING_KEY, JSON.stringify(recurringRules));
-                    showToast('บันทึกรายการและตั้งเป็นรายเดือนแล้ว');
+                        history: [`${now.getMonth() + 1}/${now.getFullYear()}`]
+                    });
+                    showToast('บันทึกและตั้งเป็นรายเดือนแล้ว');
                 } else {
                     showToast('บันทึกรายการสำเร็จ');
                 }
             }
 
-            updateValues();
             updateLocalStorage();
             init();
-            closeModal();
+            closeAddModal();
         }
 
         function generateID() { return Math.floor(Math.random() * 100000000); }
@@ -479,32 +437,20 @@
             item.innerHTML = `
                 <div class="card">
                     <div class="card-header">
-                        <div class="card-img ${itemType}">
-                            <i class="fas ${iconClass}"></i>
-                        </div>
+                        <div class="card-img ${itemType}"><i class="fas ${iconClass}"></i></div>
                         <div class="card-info">
-                            <div class="card-title">
-                                ${transaction.text} ${recurringIcon}
-                            </div>
+                            <div class="card-title">${transaction.text} ${recurringIcon}</div>
                             <span class="card-badge" style="background: ${itemType === 'income' ? '#E8F5E9' : '#FFEBEE'}; color: ${itemType === 'income' ? '#2E7D32' : '#D32F2F'};">${badgeText}</span>
                             <span class="card-date">${transaction.date}</span>
                         </div>
                     </div>
-                    
                     <div class="card-price-section">
                         <span style="font-size: 0.8rem; color: #999;">ยอดสุทธิ</span>
-                        <div class="price-final ${itemType}">
-                            ${sign}${Math.abs(transaction.amount).toLocaleString('en-US')} พ้อยท์
-                        </div>
+                        <div class="price-final ${itemType}">${sign}${Math.abs(transaction.amount).toLocaleString('en-US')} พ้อยท์</div>
                     </div>
-
                     <div class="card-actions">
-                        <button class="action-btn btn-edit" onclick="openEditModal(${transaction.id})">
-                            <i class="fas fa-edit"></i> แก้ไข
-                        </button>
-                        <button class="action-btn btn-delete" onclick="removeTransaction(${transaction.id})">
-                            <i class="fas fa-trash-alt"></i> ลบ
-                        </button>
+                        <button class="action-btn btn-edit" onclick="openEditModal(${transaction.id})"><i class="fas fa-edit"></i> แก้ไข</button>
+                        <button class="action-btn btn-delete" onclick="removeTransaction(${transaction.id})"><i class="fas fa-trash-alt"></i> ลบ</button>
                     </div>
                 </div>
             `;
@@ -540,7 +486,6 @@
             const textValue = searchInput.value.toLowerCase();
             const filterValue = filterSelect.value;
             list.innerHTML = '';
-            
             const filtered = transactions.filter(t => {
                 const matchesSearch = t.text.toLowerCase().includes(textValue);
                 let matchesType = true;
@@ -548,58 +493,35 @@
                 if (filterValue === 'expense') matchesType = t.amount < 0;
                 return matchesSearch && matchesType;
             });
-
             if (filtered.length === 0) list.innerHTML = '<div style="text-align:center; color:#999; padding:20px;">ไม่พบรายการ</div>';
             else filtered.forEach(addTransactionDOM);
         }
         function clearSearch() { searchInput.value = ''; filterTransactions(); }
-
         function showToast(msg) {
             toast.innerText = msg;
             toast.className = "show";
             setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
         }
 
-        // --- Modal Logic Updated ---
-        
-        // เปิด Modal เพื่อเพิ่มรายการใหม่
-        function openModal() { 
-            editingId = null; // Reset ID
-            form.reset();
-            modalTitle.innerText = "เพิ่มรายการใหม่";
-            btnSave.innerText = "บันทึกรายการ";
-            document.getElementById('recurring-wrapper').style.display = 'flex'; // แสดงตัวเลือก Fixed Cost
+        // Modal Logic
+        function openAddModal() { 
+            editingId = null; form.reset(); modalTitle.innerText = "เพิ่มรายการใหม่"; btnSave.innerText = "บันทึกรายการ";
+            document.getElementById('recurring-wrapper').style.display = 'flex';
             document.getElementById('addModal').classList.add('show'); 
         }
-
-        // เปิด Modal เพื่อแก้ไขรายการ
         function openEditModal(id) {
             const transaction = transactions.find(t => t.id === id);
             if (!transaction) return;
-
-            editingId = id; // Set ID
-            
-            // Populate form
-            text.value = transaction.text;
-            amount.value = Math.abs(transaction.amount);
-            type.value = transaction.amount < 0 ? 'expense' : 'income';
-            
-            // ซ่อนตัวเลือก Recurring เมื่อแก้ไข (เพื่อความเรียบง่าย ไม่ให้ Logic ตีกัน)
+            editingId = id;
+            text.value = transaction.text; amount.value = Math.abs(transaction.amount); type.value = transaction.amount < 0 ? 'expense' : 'income';
             document.getElementById('recurring-wrapper').style.display = 'none';
-            
-            modalTitle.innerText = "แก้ไขรายการ";
-            btnSave.innerText = "บันทึกการแก้ไข";
+            modalTitle.innerText = "แก้ไขรายการ"; btnSave.innerText = "บันทึกการแก้ไข";
             document.getElementById('addModal').classList.add('show');
         }
-
-        function closeModal() { 
-            document.getElementById('addModal').classList.remove('show');
-            // Reset form on close
-            setTimeout(() => {
-                form.reset();
-                editingId = null;
-            }, 300);
-        }
+        function closeAddModal() { document.getElementById('addModal').classList.remove('show'); }
+        
+        function openDataModal() { document.getElementById('dataModal').classList.add('show'); }
+        function closeDataModal() { document.getElementById('dataModal').classList.remove('show'); }
 
         function init() {
             list.innerHTML = '';
@@ -608,9 +530,13 @@
         }
 
         form.addEventListener('submit', addTransaction);
+        window.onclick = function(e) {
+            if (e.target == document.getElementById('addModal')) closeAddModal();
+            if (e.target == document.getElementById('dataModal')) closeDataModal();
+        }
+        
         checkRecurringItems();
         init();
-
     </script>
 </body>
 </html>
