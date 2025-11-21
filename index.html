@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expense Tracker - Clear Data Supported</title>
+    <title>Expense Tracker - Dynamic Balance Color</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -22,16 +22,41 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Kanit', sans-serif; -webkit-tap-highlight-color: transparent; }
         body { background-color: var(--bg-color); color: var(--text-dark); padding-bottom: 90px; }
 
-        /* --- Header --- */
         header { background: white; padding: 10px 20px 0 20px; position: relative; z-index: 10; }
         .app-logo { color: var(--text-dark); font-weight: 900; font-size: 1.5rem; margin-bottom: 15px; display: flex; align-items: center; gap: 5px; padding-top: 10px; }
         .app-logo span { color: var(--primary-red); }
 
-        .balance-container { background: linear-gradient(135deg, var(--primary-red), #b71c1c); color: white; padding: 25px 20px; border-radius: 16px; box-shadow: var(--card-shadow); text-align: center; position: relative; z-index: 2; margin-bottom: 0; }
+        /* --- Balance Card (Dynamic Color) --- */
+        .balance-container {
+            /* สีเริ่มต้น (จะถูก JS ทับ) */
+            background: linear-gradient(135deg, var(--primary-red), #b71c1c);
+            color: white;
+            padding: 25px 20px;
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            margin-bottom: 0;
+            transition: background 0.5s ease; /* เอฟเฟกต์เปลี่ยนสีนุ่มนวล */
+        }
+
+        /* Class สำหรับสีเขียว (บวก) */
+        .balance-container.positive {
+            background: linear-gradient(135deg, var(--success), #1b5e20);
+            box-shadow: 0 4px 15px rgba(46, 125, 50, 0.4);
+        }
+
+        /* Class สำหรับสีแดง (ติดลบ) */
+        .balance-container.negative {
+            background: linear-gradient(135deg, var(--primary-red), #b71c1c);
+            box-shadow: 0 4px 15px rgba(211, 47, 47, 0.4);
+        }
+
         .balance-title { font-size: 0.9rem; opacity: 0.9; }
         .balance-amount { font-size: 2.2rem; font-weight: 600; margin: 5px 0; }
 
-        /* --- Summary Box --- */
+        /* --- Summary & Other UI --- */
         .inc-exp-wrapper { padding: 0 20px; margin-top: -35px; position: relative; z-index: 3; margin-bottom: 20px; }
         .inc-exp-container { display: flex; justify-content: space-between; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: 1px solid #f5f5f5; }
         .money-box { text-align: center; flex: 1; }
@@ -40,14 +65,12 @@
         .money.plus { color: var(--success); font-weight: 600; font-size: 1.1rem;}
         .money.minus { color: var(--primary-red); font-weight: 600; font-size: 1.1rem;}
 
-        /* --- Controls --- */
         .controls { padding: 0 20px; margin-bottom: 15px; position: sticky; top: 0; background: var(--bg-color); z-index: 90; padding-top: 10px; padding-bottom: 10px; }
         .search-box { background: white; border-radius: 12px; padding: 5px 15px; display: flex; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.03); border: 1px solid #eee; margin-bottom: 10px; }
         .search-box input { border: none; outline: none; padding: 10px; width: 100%; font-size: 0.95rem; color: var(--text-dark); }
         .search-btn { background: var(--primary-red); color: white; border: none; padding: 8px 15px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
         .filter-dropdown { width: 100%; padding: 10px; border-radius: 12px; border: 1px solid #eee; background: white; color: var(--text-gray); font-size: 0.9rem; outline: none; }
 
-        /* --- List --- */
         .transaction-list { list-style: none; padding: 0 20px; }
         .card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; position: relative; border: 1px solid #f0f0f0; }
         .card-header { display: flex; align-items: flex-start; gap: 15px; margin-bottom: 10px; }
@@ -68,7 +91,6 @@
         .btn-edit { background-color: #FFF3E0; color: var(--warning); }
         .btn-delete { background-color: #FFEBEE; color: var(--primary-red); }
 
-        /* --- FAB & Modals --- */
         .fab-add { position: fixed; bottom: 80px; right: 20px; width: 55px; height: 55px; background: var(--primary-red); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 10px rgba(211, 47, 47, 0.4); cursor: pointer; z-index: 190; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 300; align-items: flex-end; }
@@ -88,26 +110,13 @@
         input:checked + .slider:before { transform: translateX(26px); }
         .btn-submit { width: 100%; padding: 14px; background: var(--primary-red); color: white; border: none; border-radius: 12px; font-size: 1rem; cursor: pointer; font-weight: 600; }
 
-        /* Data Menu Buttons */
-        .data-menu-btn {
-            width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 12px;
-            border: 1px solid #eee; background: white; display: flex; align-items: center; gap: 15px;
-            font-size: 1rem; cursor: pointer; color: var(--text-dark); box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        .data-menu-btn i { font-size: 1.2rem; width: 30px; text-align: center; }
+        .data-menu-btn { width: 100%; padding: 15px; margin-bottom: 10px; border-radius: 12px; border: 1px solid #eee; background: white; display: flex; align-items: center; gap: 15px; font-size: 1rem; cursor: pointer; color: var(--text-dark); box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .data-menu-btn:active { background-color: #f5f5f5; transform: scale(0.98); }
-        
-        /* ปุ่มลบข้อมูลให้เด่น */
-        .data-menu-btn.danger {
-            border-color: #ffebee;
-            color: var(--primary-red);
-            background: #fffafb;
-        }
+        .data-menu-btn.danger { border-color: #ffebee; color: var(--primary-red); background: #fffafb; }
 
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 25px; padding: 16px; position: fixed; z-index: 1000; left: 50%; bottom: 100px; transform: translateX(-50%); font-size: 0.9rem; opacity: 0; transition: opacity 0.3s, bottom 0.3s; }
         #toast.show { visibility: visible; opacity: 0.9; bottom: 110px; }
 
-        /* Bottom Nav */
         .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; display: flex; justify-content: space-around; padding: 10px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 200; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
         .nav-item { display: flex; flex-direction: column; align-items: center; color: var(--text-gray); text-decoration: none; font-size: 0.7rem; gap: 5px; cursor: pointer;}
         .nav-item i { font-size: 1.2rem; }
@@ -119,7 +128,7 @@
 
     <header>
         <div class="app-logo">ACC<span>PRO</span> TRACKER</div>
-        <div class="balance-container">
+        <div class="balance-container" id="balance-container">
             <div class="balance-title">ยอดเงินคงเหลือ (บาท)</div>
             <h1 id="balance" class="balance-amount">฿0.00</h1>
         </div>
@@ -197,29 +206,20 @@
                 <h2>จัดการข้อมูล (CSV)</h2>
                 <span onclick="closeDataModal()" style="font-size: 1.5rem; color: #999; cursor: pointer;">&times;</span>
             </div>
-            
             <button class="data-menu-btn" onclick="exportCSV()">
                 <i class="fas fa-file-export" style="color: var(--success);"></i>
                 <span>ส่งออกไฟล์ CSV (Export)</span>
             </button>
-            
             <button class="data-menu-btn" onclick="document.getElementById('importFile').click()">
                 <i class="fas fa-file-import" style="color: #1976D2;"></i>
                 <span>นำเข้าไฟล์ CSV (Import)</span>
             </button>
             <input type="file" id="importFile" accept=".csv" style="display: none;" onchange="importCSV(this)">
-            
             <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
-
             <button class="data-menu-btn danger" onclick="clearAllData()">
                 <i class="fas fa-trash-alt"></i>
                 <span>ล้างข้อมูลทั้งหมด (Clear All)</span>
             </button>
-
-            <div style="margin-top: 20px; font-size: 0.8rem; color: #999;">
-                *การนำเข้าจะเพิ่มรายการเข้าไปในฐานข้อมูลเดิม <br>
-                *ปุ่มล้างข้อมูลจะลบทั้งรายการและข้อมูลรายเดือน (Fixed Cost)
-            </div>
         </div>
     </div>
 
@@ -234,6 +234,7 @@
 
     <script>
         const balance = document.getElementById('balance');
+        const balanceContainer = document.getElementById('balance-container'); // Element สำหรับเปลี่ยนสี
         const money_plus = document.getElementById('money-plus');
         const money_minus = document.getElementById('money-minus');
         const list = document.getElementById('list');
@@ -255,11 +256,9 @@
         let recurringRules = JSON.parse(localStorage.getItem(RECURRING_KEY)) || [];
         let editingId = null;
 
-        // --- Data Management Functions ---
-
         function clearAllData() {
-            if(confirm('⚠️ คำเตือน: คุณแน่ใจหรือไม่ที่จะลบข้อมูลทั้งหมด? \n(การกระทำนี้ไม่สามารถกู้คืนได้)')) {
-                if(confirm('❓ ยืนยันอีกครั้ง: ลบข้อมูลทุกรายการและค่าเริ่มต้นรายเดือนทั้งหมด?')) {
+            if(confirm('⚠️ คำเตือน: คุณแน่ใจหรือไม่ที่จะลบข้อมูลทั้งหมด?')) {
+                if(confirm('❓ ยืนยันอีกครั้ง: ลบข้อมูลทุกรายการ?')) {
                     transactions = [];
                     recurringRules = [];
                     updateLocalStorage();
@@ -284,7 +283,6 @@
                 const row = `Recurring,,"${r.text}","",${typeStr},${amountPos}`;
                 csvContent += row + "\n";
             });
-
             const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csvContent);
             const link = document.createElement("a");
             link.setAttribute("href", encodedUri);
@@ -300,13 +298,11 @@
         function importCSV(input) {
             const file = input.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 const text = e.target.result;
                 const lines = text.split('\n');
                 let successCount = 0;
-
                 for (let i = 1; i < lines.length; i++) {
                     const row = parseCSVLine(lines[i]);
                     if (row.length >= 5) {
@@ -315,32 +311,16 @@
                         const name = row[2] ? row[2].trim() : 'No Name';
                         const typeStr = row[4] ? row[4].trim().toLowerCase() : 'expense';
                         const amountVal = row[5] ? parseFloat(row[5]) : 0;
-
                         if (!name || isNaN(amountVal)) continue;
                         const finalAmount = typeStr === 'expense' ? -Math.abs(amountVal) : Math.abs(amountVal);
-
                         if (recordType === 'Recurring') {
-                            const newRule = {
-                                id: generateID(),
-                                text: name,
-                                amount: finalAmount,
-                                history: []
-                            };
-                            recurringRules.push(newRule);
+                            recurringRules.push({ id: generateID(), text: name, amount: finalAmount, history: [] });
                         } else {
-                            const newTx = {
-                                id: generateID(),
-                                text: name,
-                                amount: finalAmount,
-                                date: dateStr,
-                                fromRecurring: false
-                            };
-                            transactions.push(newTx);
+                            transactions.push({ id: generateID(), text: name, amount: finalAmount, date: dateStr, fromRecurring: false });
                         }
                         successCount++;
                     }
                 }
-
                 updateLocalStorage();
                 init();
                 showToast(`นำเข้าสำเร็จ ${successCount} รายการ`);
@@ -364,73 +344,39 @@
             return a;
         }
 
-        // --- Core Functions ---
-
         function checkRecurringItems() {
             const now = new Date();
             const currentMonthKey = `${now.getMonth() + 1}/${now.getFullYear()}`;
             let addedCount = 0;
             recurringRules.forEach(rule => {
                 if (!rule.history.includes(currentMonthKey)) {
-                    transactions.push({
-                        id: generateID(),
-                        text: rule.text,
-                        amount: rule.amount,
-                        date: now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
-                        type: rule.amount < 0 ? 'expense' : 'income',
-                        fromRecurring: true
-                    });
+                    transactions.push({ id: generateID(), text: rule.text, amount: rule.amount, date: now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }), type: rule.amount < 0 ? 'expense' : 'income', fromRecurring: true });
                     rule.history.push(currentMonthKey);
                     addedCount++;
                 }
             });
-            if (addedCount > 0) {
-                updateLocalStorage();
-                showToast(`เพิ่มรายการคงที่ ${addedCount} รายการ`);
-            }
+            if (addedCount > 0) { updateLocalStorage(); showToast(`เพิ่มรายการคงที่ ${addedCount} รายการ`); }
         }
 
         function addTransaction(e) {
             e.preventDefault();
             if (text.value.trim() === '' || amount.value.trim() === '') return;
-
             const isExpense = type.value === 'expense';
             const transactionAmount = isExpense ? -Math.abs(+amount.value) : Math.abs(+amount.value);
             
             if (editingId !== null) {
                 const index = transactions.findIndex(t => t.id === editingId);
-                if (index !== -1) {
-                    transactions[index].text = text.value;
-                    transactions[index].amount = transactionAmount;
-                    showToast('แก้ไขรายการสำเร็จ');
-                }
+                if (index !== -1) { transactions[index].text = text.value; transactions[index].amount = transactionAmount; showToast('แก้ไขรายการสำเร็จ'); }
             } else {
                 const isRecurring = isRecurringCheckbox.checked;
-                transactions.push({
-                    id: generateID(),
-                    text: text.value,
-                    amount: transactionAmount,
-                    date: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }),
-                    fromRecurring: isRecurring
-                });
-
+                transactions.push({ id: generateID(), text: text.value, amount: transactionAmount, date: new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }), fromRecurring: isRecurring });
                 if (isRecurring) {
                     const now = new Date();
-                    recurringRules.push({
-                        id: generateID(),
-                        text: text.value,
-                        amount: transactionAmount,
-                        history: [`${now.getMonth() + 1}/${now.getFullYear()}`]
-                    });
+                    recurringRules.push({ id: generateID(), text: text.value, amount: transactionAmount, history: [`${now.getMonth() + 1}/${now.getFullYear()}`] });
                     showToast('บันทึกและตั้งเป็นรายเดือนแล้ว');
-                } else {
-                    showToast('บันทึกรายการสำเร็จ');
-                }
+                } else { showToast('บันทึกรายการสำเร็จ'); }
             }
-
-            updateLocalStorage();
-            init();
-            closeAddModal();
+            updateLocalStorage(); init(); closeAddModal();
         }
 
         function generateID() { return Math.floor(Math.random() * 100000000); }
@@ -441,7 +387,6 @@
             const badgeText = transaction.amount < 0 ? 'EXPENSE' : 'INCOME';
             const iconClass = transaction.amount < 0 ? 'fa-shopping-bag' : 'fa-coins';
             const recurringIcon = transaction.fromRecurring ? '<i class="fas fa-sync-alt recurring-icon"></i>' : '';
-
             const item = document.createElement('li');
             item.innerHTML = `
                 <div class="card">
@@ -475,15 +420,19 @@
             balance.innerText = `฿${Number(total).toLocaleString('en-US')}`;
             money_plus.innerText = `+฿${Number(income).toLocaleString('en-US')}`;
             money_minus.innerText = `-฿${Number(expense).toLocaleString('en-US')}`;
+
+            // เปลี่ยนสีการ์ดตามสถานะยอดเงิน
+            if (parseFloat(total) >= 0) {
+                balanceContainer.classList.add('positive');
+                balanceContainer.classList.remove('negative');
+            } else {
+                balanceContainer.classList.add('negative');
+                balanceContainer.classList.remove('positive');
+            }
         }
 
         function removeTransaction(id) {
-            if(confirm('ต้องการลบรายการนี้?')) {
-                transactions = transactions.filter(t => t.id !== id);
-                updateLocalStorage();
-                init();
-                showToast('ลบรายการแล้ว');
-            }
+            if(confirm('ต้องการลบรายการนี้?')) { transactions = transactions.filter(t => t.id !== id); updateLocalStorage(); init(); showToast('ลบรายการแล้ว'); }
         }
 
         function updateLocalStorage() {
@@ -506,18 +455,9 @@
             else filtered.forEach(addTransactionDOM);
         }
         function clearSearch() { searchInput.value = ''; filterTransactions(); }
-        function showToast(msg) {
-            toast.innerText = msg;
-            toast.className = "show";
-            setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
-        }
+        function showToast(msg) { toast.innerText = msg; toast.className = "show"; setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000); }
 
-        // Modal Logic
-        function openAddModal() { 
-            editingId = null; form.reset(); modalTitle.innerText = "เพิ่มรายการใหม่"; btnSave.innerText = "บันทึกรายการ";
-            document.getElementById('recurring-wrapper').style.display = 'flex';
-            document.getElementById('addModal').classList.add('show'); 
-        }
+        function openAddModal() { editingId = null; form.reset(); modalTitle.innerText = "เพิ่มรายการใหม่"; btnSave.innerText = "บันทึกรายการ"; document.getElementById('recurring-wrapper').style.display = 'flex'; document.getElementById('addModal').classList.add('show'); }
         function openEditModal(id) {
             const transaction = transactions.find(t => t.id === id);
             if (!transaction) return;
@@ -528,22 +468,16 @@
             document.getElementById('addModal').classList.add('show');
         }
         function closeAddModal() { document.getElementById('addModal').classList.remove('show'); }
-        
         function openDataModal() { document.getElementById('dataModal').classList.add('show'); }
         function closeDataModal() { document.getElementById('dataModal').classList.remove('show'); }
 
-        function init() {
-            list.innerHTML = '';
-            transactions.forEach(addTransactionDOM);
-            updateValues();
-        }
+        function init() { list.innerHTML = ''; transactions.forEach(addTransactionDOM); updateValues(); }
 
         form.addEventListener('submit', addTransaction);
         window.onclick = function(e) {
             if (e.target == document.getElementById('addModal')) closeAddModal();
             if (e.target == document.getElementById('dataModal')) closeDataModal();
         }
-        
         checkRecurringItems();
         init();
     </script>
