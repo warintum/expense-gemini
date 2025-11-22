@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expense Tracker - Fix Duplicate Bug</title>
+    <title>Expense Tracker - Smart Fix</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -276,7 +276,6 @@
         let recurringRules = JSON.parse(localStorage.getItem(RECURRING_KEY)) || [];
         let editingId = null;
 
-        // --- Date Helpers ---
         const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
         
         function parseThaiDate(dateStr) {
@@ -289,7 +288,99 @@
             return new Date(year, monthIndex, day);
         }
 
-        // --- Data Management Fixed ---
+        // --- CORE FIX: Smart Reconciliation ---
+        function checkRecurringItems() {
+            const now = new Date();
+            const currentMonthKey = `${now.getMonth() + 1}/${now.getFullYear()}`;
+            const dateStr = now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+            let addedCount = 0;
+
+            recurringRules.forEach(rule => {
+                if (!rule.history) rule.history = [];
+
+                if (!rule.history.includes(currentMonthKey)) {
+                    // **SMART CHECK**: Check if this transaction ALREADY exists (from import)
+                    const exists = transactions.some(t => 
+                        t.text === rule.text && 
+                        t.amount === rule.amount &&
+                        // Check if transaction is in the same month/year
+                        parseThaiDate(t.date).getMonth() === now.getMonth() &&
+                        parseThaiDate(t.date).getFullYear() === now.getFullYear()
+                    );
+
+                    if (exists) {
+                        // It exists! Just update history, DON'T create new one.
+                        rule.history.push(currentMonthKey);
+                    } else {
+                        // It really doesn't exist, create it.
+                        transactions.push({ 
+                            id: generateID(), 
+                            text: rule.text, 
+                            amount: rule.amount, 
+                            date: dateStr, 
+                            type: rule.amount < 0 ? 'expense' : 'income', 
+                            fromRecurring: true 
+                        });
+                        rule.history.push(currentMonthKey);
+                        addedCount++;
+                    }
+                }
+            });
+            
+            if (addedCount > 0) {
+                updateLocalStorage();
+                showToast(`เพิ่มรายการคงที่ ${addedCount} รายการ`);
+            } else {
+                // Save anyway to update history backfill
+                updateLocalStorage();
+            }
+        }
+
+        // --- Data Management ---
+        function deduplicateTransactions() {
+            // Remove exact duplicates
+            const uniqueTransactions = [];
+            const seen = new Set();
+
+            transactions.forEach(t => {
+                const signature = `${t.text}|${t.amount}|${t.date}`;
+                if (!seen.has(signature)) {
+                    seen.add(signature);
+                    uniqueTransactions.push(t);
+                }
+            });
+            transactions = uniqueTransactions;
+        }
+
+        function exportCSV() {
+            deduplicateTransactions(); // Clean up before export
+            updateLocalStorage();
+
+            let csvContent = "\uFEFFRecordType,Date,Name,Category,Type,Amount\n";
+            transactions.forEach(t => {
+                const amountPos = Math.abs(t.amount);
+                const typeStr = t.amount < 0 ? 'expense' : 'income';
+                const row = `Transaction,"${t.date}","${t.text}","",${typeStr},${amountPos}`;
+                csvContent += row + "\n";
+            });
+            recurringRules.forEach(r => {
+                const amountPos = Math.abs(r.amount);
+                const typeStr = r.amount < 0 ? 'expense' : 'income';
+                const row = `Recurring,,"${r.text}","",${typeStr},${amountPos}`;
+                csvContent += row + "\n";
+            });
+            const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            const dateStr = new Date().toISOString().slice(0,10);
+            link.setAttribute("download", `expense_data_${dateStr}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("ส่งออกไฟล์ CSV สำเร็จ");
+            closeDataModal();
+        }
+
         function importCSV(input) {
             const file = input.files[0];
             if (!file) return;
@@ -317,31 +408,22 @@
                         const finalAmount = typeStr === 'expense' ? -Math.abs(amountVal) : Math.abs(amountVal);
 
                         if (recordType === 'Recurring') {
-                            // Fix: Check duplicate Recurring Rule
                             const exists = recurringRules.some(r => r.text === name && r.amount === finalAmount);
                             if (!exists) {
-                                // Fix: Set History to prevent immediate duplication on reload
                                 recurringRules.push({ 
                                     id: generateID(), 
                                     text: name, 
                                     amount: finalAmount, 
-                                    history: [currentMonthKey] // Mark this month as done!
+                                    history: [currentMonthKey] // Mark as imported
                                 });
                                 successCount++;
                             } else {
                                 skippedCount++;
                             }
                         } else {
-                            // Fix: Check duplicate Transaction
                             const exists = transactions.some(t => t.text === name && t.amount === finalAmount && t.date === dateStr);
                             if (!exists) {
-                                transactions.push({ 
-                                    id: generateID(), 
-                                    text: name, 
-                                    amount: finalAmount, 
-                                    date: dateStr, 
-                                    fromRecurring: false 
-                                });
+                                transactions.push({ id: generateID(), text: name, amount: finalAmount, date: dateStr, fromRecurring: false });
                                 successCount++;
                             } else {
                                 skippedCount++;
@@ -349,9 +431,11 @@
                         }
                     }
                 }
-
+                
+                checkRecurringItems(); // Re-check consistency
                 updateLocalStorage();
                 init();
+                
                 let msg = `นำเข้าสำเร็จ ${successCount} รายการ`;
                 if(skippedCount > 0) msg += ` (ข้ามซ้ำ ${skippedCount})`;
                 showToast(msg);
@@ -360,38 +444,22 @@
             };
             reader.readAsText(file);
         }
-
-        function checkRecurringItems() {
-            const now = new Date();
-            const currentMonthKey = `${now.getMonth() + 1}/${now.getFullYear()}`;
-            let addedCount = 0;
-            recurringRules.forEach(rule => {
-                // If importing old data, rule.history might be missing or undefined if data corrupted
-                if (!rule.history) rule.history = [];
-
-                if (!rule.history.includes(currentMonthKey)) {
-                    transactions.push({ 
-                        id: generateID(), 
-                        text: rule.text, 
-                        amount: rule.amount, 
-                        date: now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }), 
-                        type: rule.amount < 0 ? 'expense' : 'income', 
-                        fromRecurring: true 
-                    });
-                    rule.history.push(currentMonthKey);
-                    addedCount++;
-                }
+        
+        // ... (Functions parseCSVLine, renderSummary, updateValues, etc. remain the same) ...
+        function parseCSVLine(text) {
+            let re_valid = /^\s*(?:'[^']*'|"[^"]*"|[^,'"]*)*(?:,(?:\s*(?:'[^']*'|"[^"]*"|[^,'"]*)*))?$/;
+            let re_value = /(?!\s*$)\s*(?:'([^']*)'|"([^"]*)"|([^,'"]*))\s*(?:,|$)/g;
+            let a = [];
+            text.replace(re_value, function(m0, m1, m2, m3) {
+                if (m1 !== undefined) a.push(m1.replace(/\\'/g, "'"));
+                else if (m2 !== undefined) a.push(m2.replace(/\\"/g, '"'));
+                else if (m3 !== undefined) a.push(m3);
+                return '';
             });
-            
-            // Only save if changes happened to avoid unnecessary writes
-            if (addedCount > 0) {
-                updateLocalStorage();
-                showToast(`เพิ่มรายการคงที่ ${addedCount} รายการ`);
-            }
+            if (/,\s*$/.test(text)) a.push('');
+            return a;
         }
 
-        // --- Other Functions (Same as before) ---
-        
         function renderSummary(period) {
             document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`btn-${period}`).classList.add('active');
@@ -517,46 +585,6 @@
             else filtered.forEach(addTransactionDOM);
         }
         function clearSearch() { searchInput.value = ''; filterTransactions(); }
-
-        function exportCSV() {
-            let csvContent = "\uFEFFRecordType,Date,Name,Category,Type,Amount\n";
-            transactions.forEach(t => {
-                const amountPos = Math.abs(t.amount);
-                const typeStr = t.amount < 0 ? 'expense' : 'income';
-                const row = `Transaction,"${t.date}","${t.text}","",${typeStr},${amountPos}`;
-                csvContent += row + "\n";
-            });
-            recurringRules.forEach(r => {
-                const amountPos = Math.abs(r.amount);
-                const typeStr = r.amount < 0 ? 'expense' : 'income';
-                const row = `Recurring,,"${r.text}","",${typeStr},${amountPos}`;
-                csvContent += row + "\n";
-            });
-            const encodedUri = encodeURI("data:text/csv;charset=utf-8," + csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            const dateStr = new Date().toISOString().slice(0,10);
-            link.setAttribute("download", `expense_data_${dateStr}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            showToast("ส่งออกไฟล์ CSV สำเร็จ");
-            closeDataModal();
-        }
-
-        function parseCSVLine(text) {
-            let re_valid = /^\s*(?:'[^']*'|"[^"]*"|[^,'"]*)*(?:,(?:\s*(?:'[^']*'|"[^"]*"|[^,'"]*)*))?$/;
-            let re_value = /(?!\s*$)\s*(?:'([^']*)'|"([^"]*)"|([^,'"]*))\s*(?:,|$)/g;
-            let a = [];
-            text.replace(re_value, function(m0, m1, m2, m3) {
-                if (m1 !== undefined) a.push(m1.replace(/\\'/g, "'"));
-                else if (m2 !== undefined) a.push(m2.replace(/\\"/g, '"'));
-                else if (m3 !== undefined) a.push(m3);
-                return '';
-            });
-            if (/,\s*$/.test(text)) a.push('');
-            return a;
-        }
 
         function clearAllData() {
             if(confirm('⚠️ คำเตือน: คุณแน่ใจหรือไม่ที่จะลบข้อมูลทั้งหมด?')) {
