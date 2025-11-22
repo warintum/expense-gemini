@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expense Tracker - Summary Update</title>
+    <title>Expense Tracker - Fix Duplicate Bug</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -27,7 +27,6 @@
         .app-logo { color: var(--text-dark); font-weight: 900; font-size: 1.5rem; margin-bottom: 15px; display: flex; align-items: center; gap: 5px; padding-top: 10px; }
         .app-logo span { color: var(--primary-red); }
 
-        /* --- Balance Card --- */
         .balance-container {
             background: linear-gradient(135deg, var(--primary-red), #b71c1c);
             color: white; padding: 25px 20px; border-radius: 16px;
@@ -40,7 +39,6 @@
         .balance-title { font-size: 0.9rem; opacity: 0.9; }
         .balance-amount { font-size: 2.2rem; font-weight: 600; margin: 5px 0; }
 
-        /* --- Summary Box --- */
         .inc-exp-wrapper { padding: 0 20px; margin-top: -35px; position: relative; z-index: 3; margin-bottom: 20px; }
         .inc-exp-container { display: flex; justify-content: space-between; background: white; padding: 15px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); border: 1px solid #f5f5f5; }
         .money-box { text-align: center; flex: 1; }
@@ -49,14 +47,12 @@
         .money.plus { color: var(--success); font-weight: 600; font-size: 1.1rem;}
         .money.minus { color: var(--primary-red); font-weight: 600; font-size: 1.1rem;}
 
-        /* --- Controls --- */
         .controls { padding: 0 20px; margin-bottom: 15px; position: sticky; top: 0; background: var(--bg-color); z-index: 90; padding-top: 10px; padding-bottom: 10px; }
         .search-box { background: white; border-radius: 12px; padding: 5px 15px; display: flex; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.03); border: 1px solid #eee; margin-bottom: 10px; }
         .search-box input { border: none; outline: none; padding: 10px; width: 100%; font-size: 0.95rem; color: var(--text-dark); }
         .search-btn { background: var(--primary-red); color: white; border: none; padding: 8px 15px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
         .filter-dropdown { width: 100%; padding: 10px; border-radius: 12px; border: 1px solid #eee; background: white; color: var(--text-gray); font-size: 0.9rem; outline: none; }
 
-        /* --- List --- */
         .transaction-list { list-style: none; padding: 0 20px; }
         .card { background: white; border-radius: 16px; padding: 15px; margin-bottom: 15px; box-shadow: var(--card-shadow); display: flex; flex-direction: column; position: relative; border: 1px solid #f0f0f0; }
         .card-header { display: flex; align-items: flex-start; gap: 15px; margin-bottom: 10px; }
@@ -214,16 +210,12 @@
                 <h2>สรุปผลการเงิน</h2>
                 <span onclick="closeSummaryModal()" style="font-size: 1.5rem; color: #999; cursor: pointer;">&times;</span>
             </div>
-
             <div class="summary-toggle">
                 <button class="toggle-btn active" id="btn-month" onclick="renderSummary('month')">เดือนนี้</button>
                 <button class="toggle-btn" id="btn-year" onclick="renderSummary('year')">ปีนี้</button>
                 <button class="toggle-btn" id="btn-all" onclick="renderSummary('all')">ทั้งหมด</button>
             </div>
-
-            <div id="summary-content">
-                </div>
-
+            <div id="summary-content"></div>
         </div>
     </div>
 
@@ -288,21 +280,119 @@
         const thaiMonths = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
         
         function parseThaiDate(dateStr) {
-            // แปลง string "11 พฤศจิกายน 2568" กลับเป็น JS Date Object
             if(!dateStr) return new Date();
             const parts = dateStr.split(' ');
             if(parts.length !== 3) return new Date();
-            
             const day = parseInt(parts[0]);
             const monthIndex = thaiMonths.indexOf(parts[1]);
-            const year = parseInt(parts[2]) - 543; // แปลง พ.ศ. เป็น ค.ศ.
-            
+            const year = parseInt(parts[2]) - 543;
             return new Date(year, monthIndex, day);
         }
 
-        // --- Summary Logic ---
+        // --- Data Management Fixed ---
+        function importCSV(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split('\n');
+                let successCount = 0;
+                let skippedCount = 0;
+
+                const now = new Date();
+                const currentMonthKey = `${now.getMonth() + 1}/${now.getFullYear()}`;
+
+                for (let i = 1; i < lines.length; i++) {
+                    const row = parseCSVLine(lines[i]);
+                    if (row.length >= 5) {
+                        const recordType = row[0] ? row[0].trim() : 'Transaction';
+                        const dateStr = row[1] ? row[1].trim() : new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' });
+                        const name = row[2] ? row[2].trim() : 'No Name';
+                        const typeStr = row[4] ? row[4].trim().toLowerCase() : 'expense';
+                        const amountVal = row[5] ? parseFloat(row[5]) : 0;
+
+                        if (!name || isNaN(amountVal)) continue;
+                        const finalAmount = typeStr === 'expense' ? -Math.abs(amountVal) : Math.abs(amountVal);
+
+                        if (recordType === 'Recurring') {
+                            // Fix: Check duplicate Recurring Rule
+                            const exists = recurringRules.some(r => r.text === name && r.amount === finalAmount);
+                            if (!exists) {
+                                // Fix: Set History to prevent immediate duplication on reload
+                                recurringRules.push({ 
+                                    id: generateID(), 
+                                    text: name, 
+                                    amount: finalAmount, 
+                                    history: [currentMonthKey] // Mark this month as done!
+                                });
+                                successCount++;
+                            } else {
+                                skippedCount++;
+                            }
+                        } else {
+                            // Fix: Check duplicate Transaction
+                            const exists = transactions.some(t => t.text === name && t.amount === finalAmount && t.date === dateStr);
+                            if (!exists) {
+                                transactions.push({ 
+                                    id: generateID(), 
+                                    text: name, 
+                                    amount: finalAmount, 
+                                    date: dateStr, 
+                                    fromRecurring: false 
+                                });
+                                successCount++;
+                            } else {
+                                skippedCount++;
+                            }
+                        }
+                    }
+                }
+
+                updateLocalStorage();
+                init();
+                let msg = `นำเข้าสำเร็จ ${successCount} รายการ`;
+                if(skippedCount > 0) msg += ` (ข้ามซ้ำ ${skippedCount})`;
+                showToast(msg);
+                closeDataModal();
+                input.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function checkRecurringItems() {
+            const now = new Date();
+            const currentMonthKey = `${now.getMonth() + 1}/${now.getFullYear()}`;
+            let addedCount = 0;
+            recurringRules.forEach(rule => {
+                // If importing old data, rule.history might be missing or undefined if data corrupted
+                if (!rule.history) rule.history = [];
+
+                if (!rule.history.includes(currentMonthKey)) {
+                    transactions.push({ 
+                        id: generateID(), 
+                        text: rule.text, 
+                        amount: rule.amount, 
+                        date: now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }), 
+                        type: rule.amount < 0 ? 'expense' : 'income', 
+                        fromRecurring: true 
+                    });
+                    rule.history.push(currentMonthKey);
+                    addedCount++;
+                }
+            });
+            
+            // Only save if changes happened to avoid unnecessary writes
+            if (addedCount > 0) {
+                updateLocalStorage();
+                showToast(`เพิ่มรายการคงที่ ${addedCount} รายการ`);
+            }
+        }
+
+        // --- Other Functions (Same as before) ---
+        
         function renderSummary(period) {
-            // Update Toggle Buttons
             document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`btn-${period}`).classList.add('active');
 
@@ -312,70 +402,32 @@
 
             let filtered = transactions.filter(t => {
                 const tDate = parseThaiDate(t.date);
-                if (period === 'month') {
-                    return tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear;
-                } else if (period === 'year') {
-                    return tDate.getFullYear() === currentYear;
-                }
-                return true; // All
+                if (period === 'month') return tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear;
+                if (period === 'year') return tDate.getFullYear() === currentYear;
+                return true;
             });
 
-            // Calculate Totals
             const inc = filtered.filter(t => t.amount > 0).reduce((acc, t) => acc + t.amount, 0);
-            const exp = filtered.filter(t => t.amount < 0).reduce((acc, t) => acc + Math.abs(t.amount), 0); // เอาค่าบวกมาบวกกัน
+            const exp = filtered.filter(t => t.amount < 0).reduce((acc, t) => acc + Math.abs(t.amount), 0);
             const net = inc - exp;
-
-            // Calculate Bar Widths %
             const totalVol = inc + exp;
             const incPct = totalVol === 0 ? 0 : (inc / totalVol) * 100;
             const expPct = totalVol === 0 ? 0 : (exp / totalVol) * 100;
 
-            // Find Top Expenses
-            const expenses = filtered.filter(t => t.amount < 0).sort((a, b) => a.amount - b.amount).slice(0, 5); // น้อยไปมาก (ติดลบมากสุดคือจ่ายเยอะสุด)
+            const expenses = filtered.filter(t => t.amount < 0).sort((a, b) => a.amount - b.amount).slice(0, 5);
+            let expenseHtml = expenses.length > 0 ? expenses.map(t => `<li class="top-expense-item"><span>${t.text}</span><span style="color: var(--primary-red); font-weight:600;">${t.amount.toLocaleString()}</span></li>`).join('') : '<li class="top-expense-item" style="color:#999;">ไม่มีรายการรายจ่าย</li>';
 
-            let expenseHtml = '';
-            if (expenses.length > 0) {
-                expenseHtml = expenses.map(t => `
-                    <li class="top-expense-item">
-                        <span>${t.text}</span>
-                        <span style="color: var(--primary-red); font-weight:600;">${t.amount.toLocaleString()}</span>
-                    </li>
-                `).join('');
-            } else {
-                expenseHtml = '<li class="top-expense-item" style="color:#999;">ไม่มีรายการรายจ่าย</li>';
-            }
-
-            // Generate HTML
             summaryContent.innerHTML = `
                 <div class="summary-card">
-                    <div class="summary-row">
-                        <span class="summary-label">รายรับรวม</span>
-                        <span class="summary-val inc">+${inc.toLocaleString()}</span>
-                    </div>
-                    <div class="summary-row">
-                        <span class="summary-label">รายจ่ายรวม</span>
-                        <span class="summary-val exp">-${exp.toLocaleString()}</span>
-                    </div>
-                     <div class="bar-chart-container">
-                        <div class="bar-part bar-inc" style="width: ${incPct}%"></div>
-                        <div class="bar-part bar-exp" style="width: ${expPct}%"></div>
-                    </div>
-                    <div style="margin-top:15px; text-align:center; font-size:0.9rem;">
-                        <span style="color:#757575;">เงินคงเหลือสุทธิ: </span>
-                        <span style="font-weight:600; color:${net >= 0 ? 'var(--success)' : 'var(--primary-red)'}">${net.toLocaleString()} บาท</span>
-                    </div>
+                    <div class="summary-row"><span class="summary-label">รายรับรวม</span><span class="summary-val inc">+${inc.toLocaleString()}</span></div>
+                    <div class="summary-row"><span class="summary-label">รายจ่ายรวม</span><span class="summary-val exp">-${exp.toLocaleString()}</span></div>
+                     <div class="bar-chart-container"><div class="bar-part bar-inc" style="width: ${incPct}%"></div><div class="bar-part bar-exp" style="width: ${expPct}%"></div></div>
+                    <div style="margin-top:15px; text-align:center; font-size:0.9rem;"><span style="color:#757575;">เงินคงเหลือสุทธิ: </span><span style="font-weight:600; color:${net >= 0 ? 'var(--success)' : 'var(--primary-red)'}">${net.toLocaleString()} บาท</span></div>
                 </div>
-
-                <div class="summary-card">
-                    <h4 style="margin-bottom:10px; font-size:1rem;">รายจ่ายสูงสุด 5 อันดับ</h4>
-                    <ul class="top-expense-list">
-                        ${expenseHtml}
-                    </ul>
-                </div>
+                <div class="summary-card"><h4 style="margin-bottom:10px; font-size:1rem;">รายจ่ายสูงสุด 5 อันดับ</h4><ul class="top-expense-list">${expenseHtml}</ul></div>
             `;
         }
 
-        // --- Core App Logic ---
         function updateValues() {
             const amounts = transactions.map(t => t.amount);
             const total = amounts.reduce((acc, item) => (acc += item), 0).toFixed(2);
@@ -450,20 +502,6 @@
             if(confirm('ต้องการลบรายการนี้?')) { transactions = transactions.filter(t => t.id !== id); updateLocalStorage(); init(); showToast('ลบรายการแล้ว'); }
         }
 
-        function checkRecurringItems() {
-            const now = new Date();
-            const currentMonthKey = `${now.getMonth() + 1}/${now.getFullYear()}`;
-            let addedCount = 0;
-            recurringRules.forEach(rule => {
-                if (!rule.history.includes(currentMonthKey)) {
-                    transactions.push({ id: generateID(), text: rule.text, amount: rule.amount, date: now.toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' }), type: rule.amount < 0 ? 'expense' : 'income', fromRecurring: true });
-                    rule.history.push(currentMonthKey);
-                    addedCount++;
-                }
-            });
-            if (addedCount > 0) { updateLocalStorage(); showToast(`เพิ่มรายการคงที่ ${addedCount} รายการ`); }
-        }
-
         function filterTransactions() {
             const textValue = searchInput.value.toLowerCase();
             const filterValue = filterSelect.value;
@@ -480,7 +518,6 @@
         }
         function clearSearch() { searchInput.value = ''; filterTransactions(); }
 
-        // --- CSV & Data ---
         function exportCSV() {
             let csvContent = "\uFEFFRecordType,Date,Name,Category,Type,Amount\n";
             transactions.forEach(t => {
@@ -507,36 +544,6 @@
             closeDataModal();
         }
 
-        function importCSV(input) {
-            const file = input.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const text = e.target.result;
-                const lines = text.split('\n');
-                let successCount = 0;
-                for (let i = 1; i < lines.length; i++) {
-                    const row = parseCSVLine(lines[i]);
-                    if (row.length >= 5) {
-                        const recordType = row[0] ? row[0].trim() : 'Transaction';
-                        const dateStr = row[1] ? row[1].trim() : new Date().toLocaleDateString('th-TH');
-                        const name = row[2] ? row[2].trim() : 'No Name';
-                        const typeStr = row[4] ? row[4].trim().toLowerCase() : 'expense';
-                        const amountVal = row[5] ? parseFloat(row[5]) : 0;
-                        if (!name || isNaN(amountVal)) continue;
-                        const finalAmount = typeStr === 'expense' ? -Math.abs(amountVal) : Math.abs(amountVal);
-                        if (recordType === 'Recurring') {
-                            recurringRules.push({ id: generateID(), text: name, amount: finalAmount, history: [] });
-                        } else {
-                            transactions.push({ id: generateID(), text: name, amount: finalAmount, date: dateStr, fromRecurring: false });
-                        }
-                        successCount++;
-                    }
-                }
-                updateLocalStorage(); init(); showToast(`นำเข้าสำเร็จ ${successCount} รายการ`); closeDataModal(); input.value = '';
-            };
-            reader.readAsText(file);
-        }
         function parseCSVLine(text) {
             let re_valid = /^\s*(?:'[^']*'|"[^"]*"|[^,'"]*)*(?:,(?:\s*(?:'[^']*'|"[^"]*"|[^,'"]*)*))?$/;
             let re_value = /(?!\s*$)\s*(?:'([^']*)'|"([^"]*)"|([^,'"]*))\s*(?:,|$)/g;
@@ -559,12 +566,10 @@
             }
         }
 
-        // --- Generic Helpers ---
         function updateLocalStorage() { localStorage.setItem(TRANSACTION_KEY, JSON.stringify(transactions)); localStorage.setItem(RECURRING_KEY, JSON.stringify(recurringRules)); }
         function generateID() { return Math.floor(Math.random() * 100000000); }
         function showToast(msg) { toast.innerText = msg; toast.className = "show"; setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000); }
 
-        // --- Modals Navigation ---
         function openAddModal() { editingId = null; form.reset(); modalTitle.innerText = "เพิ่มรายการใหม่"; btnSave.innerText = "บันทึกรายการ"; document.getElementById('recurring-wrapper').style.display = 'flex'; document.getElementById('addModal').classList.add('show'); }
         function closeAddModal() { document.getElementById('addModal').classList.remove('show'); }
         function openEditModal(id) {
@@ -587,7 +592,7 @@
             if (e.target == document.getElementById('summaryModal')) closeSummaryModal();
         }
 
-        checkRecurringItems();
+        checkRecurringItems(); // Run once on load
         init();
     </script>
 </body>
