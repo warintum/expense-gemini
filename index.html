@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expense Tracker - Smart Fix</title>
+    <title>Expense Tracker - Monthly Summary</title>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -46,6 +46,7 @@
         .money-box h4 { font-size: 0.8rem; color: var(--text-gray); margin-bottom: 5px;}
         .money.plus { color: var(--success); font-weight: 600; font-size: 1.1rem;}
         .money.minus { color: var(--primary-red); font-weight: 600; font-size: 1.1rem;}
+        .period-badge { font-size: 0.7rem; color: #999; font-weight: 400; margin-left: 5px; }
 
         .controls { padding: 0 20px; margin-bottom: 15px; position: sticky; top: 0; background: var(--bg-color); z-index: 90; padding-top: 10px; padding-bottom: 10px; }
         .search-box { background: white; border-radius: 12px; padding: 5px 15px; display: flex; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.03); border: 1px solid #eee; margin-bottom: 10px; }
@@ -75,7 +76,6 @@
 
         .fab-add { position: fixed; bottom: 80px; right: 20px; width: 55px; height: 55px; background: var(--primary-red); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; box-shadow: 0 4px 10px rgba(211, 47, 47, 0.4); cursor: pointer; z-index: 190; }
 
-        /* --- Modals --- */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 300; align-items: flex-end; }
         .modal.show { display: flex; }
         .modal-content { background: white; width: 100%; padding: 25px 20px 40px 20px; border-radius: 20px 20px 0 0; animation: slideUp 0.3s ease; max-height: 90vh; overflow-y: auto;}
@@ -97,23 +97,19 @@
         .data-menu-btn:active { background-color: #f5f5f5; transform: scale(0.98); }
         .data-menu-btn.danger { border-color: #ffebee; color: var(--primary-red); background: #fffafb; }
 
-        /* --- Summary Styles --- */
         .summary-toggle { display: flex; background: #f0f0f0; padding: 5px; border-radius: 10px; margin-bottom: 20px; }
         .toggle-btn { flex: 1; border: none; background: none; padding: 8px; border-radius: 8px; font-size: 0.9rem; color: var(--text-gray); cursor: pointer; }
         .toggle-btn.active { background: white; color: var(--primary-red); font-weight: 600; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-
         .summary-card { background: #f8f9fa; border-radius: 12px; padding: 15px; margin-bottom: 15px; border: 1px solid #eee; }
         .summary-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .summary-label { color: var(--text-gray); font-size: 0.9rem; }
         .summary-val { font-weight: 600; font-size: 1rem; }
         .summary-val.inc { color: var(--success); }
         .summary-val.exp { color: var(--primary-red); }
-
         .bar-chart-container { margin-top: 10px; height: 10px; background: #eee; border-radius: 5px; overflow: hidden; display: flex; }
         .bar-part { height: 100%; }
         .bar-inc { background: var(--success); }
         .bar-exp { background: var(--primary-red); }
-
         .top-expense-list { list-style: none; margin-top: 10px; }
         .top-expense-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 0.9rem; }
         .top-expense-item:last-child { border-bottom: none; }
@@ -133,7 +129,7 @@
     <header>
         <div class="app-logo">ACC<span>PRO</span> TRACKER</div>
         <div class="balance-container" id="balance-container">
-            <div class="balance-title">ยอดเงินคงเหลือ (บาท)</div>
+            <div class="balance-title">ยอดเงินคงเหลือ (ทั้งหมด)</div>
             <h1 id="balance" class="balance-amount">฿0.00</h1>
         </div>
     </header>
@@ -141,11 +137,11 @@
     <div class="inc-exp-wrapper">
         <div class="inc-exp-container">
             <div class="money-box">
-                <h4>รายรับทั้งหมด</h4>
+                <h4>รายรับ <span class="period-badge">(เดือนนี้)</span></h4>
                 <p id="money-plus" class="money plus">+฿0.00</p>
             </div>
             <div class="money-box">
-                <h4>รายจ่ายทั้งหมด</h4>
+                <h4>รายจ่าย <span class="period-badge">(เดือนนี้)</span></h4>
                 <p id="money-minus" class="money minus">-฿0.00</p>
             </div>
         </div>
@@ -288,7 +284,42 @@
             return new Date(year, monthIndex, day);
         }
 
-        // --- CORE FIX: Smart Reconciliation ---
+        // --- Updated UpdateValues Function ---
+        function updateValues() {
+            // 1. Balance: คิดจากรายการทั้งหมด (All-time)
+            const allAmounts = transactions.map(t => t.amount);
+            const totalBalance = allAmounts.reduce((acc, item) => (acc += item), 0).toFixed(2);
+
+            // 2. Income/Expense: คิดเฉพาะรายการของเดือนนี้ (Current Month)
+            const now = new Date();
+            const currentMonth = now.getMonth();
+            const currentYear = now.getFullYear();
+
+            const monthlyTransactions = transactions.filter(t => {
+                const d = parseThaiDate(t.date);
+                return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+            });
+
+            const monthlyAmounts = monthlyTransactions.map(t => t.amount);
+            const income = monthlyAmounts.filter(item => item > 0).reduce((acc, item) => (acc += item), 0).toFixed(2);
+            const expense = (monthlyAmounts.filter(item => item < 0).reduce((acc, item) => (acc += item), 0) * -1).toFixed(2);
+
+            // Display
+            balance.innerText = `฿${Number(totalBalance).toLocaleString('en-US')}`;
+            money_plus.innerText = `+฿${Number(income).toLocaleString('en-US')}`;
+            money_minus.innerText = `-฿${Number(expense).toLocaleString('en-US')}`;
+
+            // Color logic (Based on Total Balance)
+            if (parseFloat(totalBalance) >= 0) {
+                balanceContainer.classList.add('positive');
+                balanceContainer.classList.remove('negative');
+            } else {
+                balanceContainer.classList.add('negative');
+                balanceContainer.classList.remove('positive');
+            }
+        }
+
+        // --- Data Logic ---
         function checkRecurringItems() {
             const now = new Date();
             const currentMonthKey = `${now.getMonth() + 1}/${now.getFullYear()}`;
@@ -297,29 +328,20 @@
 
             recurringRules.forEach(rule => {
                 if (!rule.history) rule.history = [];
-
                 if (!rule.history.includes(currentMonthKey)) {
-                    // **SMART CHECK**: Check if this transaction ALREADY exists (from import)
                     const exists = transactions.some(t => 
                         t.text === rule.text && 
                         t.amount === rule.amount &&
-                        // Check if transaction is in the same month/year
                         parseThaiDate(t.date).getMonth() === now.getMonth() &&
                         parseThaiDate(t.date).getFullYear() === now.getFullYear()
                     );
 
                     if (exists) {
-                        // It exists! Just update history, DON'T create new one.
                         rule.history.push(currentMonthKey);
                     } else {
-                        // It really doesn't exist, create it.
                         transactions.push({ 
-                            id: generateID(), 
-                            text: rule.text, 
-                            amount: rule.amount, 
-                            date: dateStr, 
-                            type: rule.amount < 0 ? 'expense' : 'income', 
-                            fromRecurring: true 
+                            id: generateID(), text: rule.text, amount: rule.amount, 
+                            date: dateStr, type: rule.amount < 0 ? 'expense' : 'income', fromRecurring: true 
                         });
                         rule.history.push(currentMonthKey);
                         addedCount++;
@@ -327,35 +349,23 @@
                 }
             });
             
-            if (addedCount > 0) {
-                updateLocalStorage();
-                showToast(`เพิ่มรายการคงที่ ${addedCount} รายการ`);
-            } else {
-                // Save anyway to update history backfill
-                updateLocalStorage();
-            }
+            if (addedCount > 0) { updateLocalStorage(); showToast(`เพิ่มรายการคงที่ ${addedCount} รายการ`); } 
+            else { updateLocalStorage(); }
         }
 
-        // --- Data Management ---
         function deduplicateTransactions() {
-            // Remove exact duplicates
             const uniqueTransactions = [];
             const seen = new Set();
-
             transactions.forEach(t => {
                 const signature = `${t.text}|${t.amount}|${t.date}`;
-                if (!seen.has(signature)) {
-                    seen.add(signature);
-                    uniqueTransactions.push(t);
-                }
+                if (!seen.has(signature)) { seen.add(signature); uniqueTransactions.push(t); }
             });
             transactions = uniqueTransactions;
         }
 
         function exportCSV() {
-            deduplicateTransactions(); // Clean up before export
+            deduplicateTransactions();
             updateLocalStorage();
-
             let csvContent = "\uFEFFRecordType,Date,Name,Category,Type,Amount\n";
             transactions.forEach(t => {
                 const amountPos = Math.abs(t.amount);
@@ -384,14 +394,12 @@
         function importCSV(input) {
             const file = input.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 const text = e.target.result;
                 const lines = text.split('\n');
                 let successCount = 0;
                 let skippedCount = 0;
-
                 const now = new Date();
                 const currentMonthKey = `${now.getMonth() + 1}/${now.getFullYear()}`;
 
@@ -403,49 +411,32 @@
                         const name = row[2] ? row[2].trim() : 'No Name';
                         const typeStr = row[4] ? row[4].trim().toLowerCase() : 'expense';
                         const amountVal = row[5] ? parseFloat(row[5]) : 0;
-
                         if (!name || isNaN(amountVal)) continue;
                         const finalAmount = typeStr === 'expense' ? -Math.abs(amountVal) : Math.abs(amountVal);
 
                         if (recordType === 'Recurring') {
                             const exists = recurringRules.some(r => r.text === name && r.amount === finalAmount);
                             if (!exists) {
-                                recurringRules.push({ 
-                                    id: generateID(), 
-                                    text: name, 
-                                    amount: finalAmount, 
-                                    history: [currentMonthKey] // Mark as imported
-                                });
+                                recurringRules.push({ id: generateID(), text: name, amount: finalAmount, history: [currentMonthKey] });
                                 successCount++;
-                            } else {
-                                skippedCount++;
-                            }
+                            } else { skippedCount++; }
                         } else {
                             const exists = transactions.some(t => t.text === name && t.amount === finalAmount && t.date === dateStr);
                             if (!exists) {
                                 transactions.push({ id: generateID(), text: name, amount: finalAmount, date: dateStr, fromRecurring: false });
                                 successCount++;
-                            } else {
-                                skippedCount++;
-                            }
+                            } else { skippedCount++; }
                         }
                     }
                 }
-                
-                checkRecurringItems(); // Re-check consistency
-                updateLocalStorage();
-                init();
-                
+                checkRecurringItems(); updateLocalStorage(); init();
                 let msg = `นำเข้าสำเร็จ ${successCount} รายการ`;
                 if(skippedCount > 0) msg += ` (ข้ามซ้ำ ${skippedCount})`;
-                showToast(msg);
-                closeDataModal();
-                input.value = '';
+                showToast(msg); closeDataModal(); input.value = '';
             };
             reader.readAsText(file);
         }
-        
-        // ... (Functions parseCSVLine, renderSummary, updateValues, etc. remain the same) ...
+
         function parseCSVLine(text) {
             let re_valid = /^\s*(?:'[^']*'|"[^"]*"|[^,'"]*)*(?:,(?:\s*(?:'[^']*'|"[^"]*"|[^,'"]*)*))?$/;
             let re_value = /(?!\s*$)\s*(?:'([^']*)'|"([^"]*)"|([^,'"]*))\s*(?:,|$)/g;
@@ -463,28 +454,23 @@
         function renderSummary(period) {
             document.querySelectorAll('.toggle-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`btn-${period}`).classList.add('active');
-
             const now = new Date();
             const currentMonth = now.getMonth();
             const currentYear = now.getFullYear();
-
             let filtered = transactions.filter(t => {
                 const tDate = parseThaiDate(t.date);
                 if (period === 'month') return tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear;
                 if (period === 'year') return tDate.getFullYear() === currentYear;
                 return true;
             });
-
             const inc = filtered.filter(t => t.amount > 0).reduce((acc, t) => acc + t.amount, 0);
             const exp = filtered.filter(t => t.amount < 0).reduce((acc, t) => acc + Math.abs(t.amount), 0);
             const net = inc - exp;
             const totalVol = inc + exp;
             const incPct = totalVol === 0 ? 0 : (inc / totalVol) * 100;
             const expPct = totalVol === 0 ? 0 : (exp / totalVol) * 100;
-
             const expenses = filtered.filter(t => t.amount < 0).sort((a, b) => a.amount - b.amount).slice(0, 5);
             let expenseHtml = expenses.length > 0 ? expenses.map(t => `<li class="top-expense-item"><span>${t.text}</span><span style="color: var(--primary-red); font-weight:600;">${t.amount.toLocaleString()}</span></li>`).join('') : '<li class="top-expense-item" style="color:#999;">ไม่มีรายการรายจ่าย</li>';
-
             summaryContent.innerHTML = `
                 <div class="summary-card">
                     <div class="summary-row"><span class="summary-label">รายรับรวม</span><span class="summary-val inc">+${inc.toLocaleString()}</span></div>
@@ -494,25 +480,6 @@
                 </div>
                 <div class="summary-card"><h4 style="margin-bottom:10px; font-size:1rem;">รายจ่ายสูงสุด 5 อันดับ</h4><ul class="top-expense-list">${expenseHtml}</ul></div>
             `;
-        }
-
-        function updateValues() {
-            const amounts = transactions.map(t => t.amount);
-            const total = amounts.reduce((acc, item) => (acc += item), 0).toFixed(2);
-            const income = amounts.filter(item => item > 0).reduce((acc, item) => (acc += item), 0).toFixed(2);
-            const expense = (amounts.filter(item => item < 0).reduce((acc, item) => (acc += item), 0) * -1).toFixed(2);
-
-            balance.innerText = `฿${Number(total).toLocaleString('en-US')}`;
-            money_plus.innerText = `+฿${Number(income).toLocaleString('en-US')}`;
-            money_minus.innerText = `-฿${Number(expense).toLocaleString('en-US')}`;
-
-            if (parseFloat(total) >= 0) {
-                balanceContainer.classList.add('positive');
-                balanceContainer.classList.remove('negative');
-            } else {
-                balanceContainer.classList.add('negative');
-                balanceContainer.classList.remove('positive');
-            }
         }
 
         function addTransaction(e) {
